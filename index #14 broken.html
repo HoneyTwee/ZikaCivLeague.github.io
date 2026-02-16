@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIKA CIV LEAGUE</title>
+
+  <style>
+    @font-face{
+      font-family: "ZikaTitle";
+      src: url("assets/fonts/OPTIColumna-Solid.otf") format("opentype");
+      font-display: swap;
+    }
+
+    :root{
+      /* ===== general ===== */
+      --titleGold: #d5ac56;
+      --ink: rgba(255,255,255,0.92);
+      --inkDim: rgba(255,255,255,0.78);
+      --shadow: 0 22px 65px rgba(0,0,0,0.40);
+      --softShadow: 0 10px 30px rgba(0,0,0,0.22);
+
+      /* ===== timeline sizing ===== */
+      --nodeW: clamp(520px, 40vw, 720px);
+      --nodeGap: clamp(86px, 8vw, 140px);
+      --timelinePad: clamp(90px, 10vw, 170px);
+
+      /* centerline for the dotted timeline vs tables */
+      --tableLineY: 44%;
+
+      /* ===== podium: rank-scaled avatar sizes ===== */
+      --a1: clamp(170px, 18vh, 250px);
+      --a2: clamp(130px, 14vh, 190px);
+      --a3: clamp(130px, 14vh, 190px);
+      --a4: clamp(112px, 12vh, 160px);
+      --a5: clamp(112px, 12vh, 160px);
+
+      /* stats text sizes */
+      --statTitle: 12px;
+      --statValue: 13px;
+
+      /* ===== timeline under-table avatar sizes (bigger now) ===== */
+      --t1: clamp(150px, 16vh, 220px);
+      --t2: clamp(120px, 13vh, 180px);
+      --t3: clamp(110px, 12vh, 160px);
+
+      --tGapRow: clamp(26px, 3vh, 40px);     /* vertical gap between 1/2/3 rows */
+      --tGapPair: clamp(28px, 3vw, 44px);    /* horizontal gap between player and civ avatar */
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#05060a;
+      color:var(--ink);
+    }
+
+    /* ===== horizontal scroller ===== */
+    #scroller{
+      height:100vh;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-behavior:auto; /* we handle smoothness ourselves */
+      -webkit-overflow-scrolling:touch;
+      outline:none;
+    }
+    #row{
+      display:flex;
+      height:100%;
+      width:max-content;
+    }
+
+    /* =========================
+       PODIUM PAGE
+    ========================== */
+    .podiumPanel{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      flex:0 0 100vw;
+      overflow:hidden;
+    }
+    .bgMap{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background:
+        radial-gradient(1200px 800px at 25% 20%, rgba(130,170,255,0.22), transparent 60%),
+        radial-gradient(900px 600px at 70% 60%, rgba(255,255,255,0.10), transparent 65%),
+        url("assets/backgrounds/map.png");
+      background-size:cover;
+      background-position:center;
+      filter:saturate(1.05) contrast(1.05);
+      transform: translate3d(0,0,0);
+    }
+    .mapTint{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background: rgba(5,10,18,0.24);
+    }
+
+    /* statues */
+    .statue{
+      position:absolute;
+      bottom:-12vh; /* push legs offscreen */
+      width: min(34vw, 560px);
+      max-width: 560px;
+      opacity: 0.92;
+      filter: drop-shadow(0 26px 70px rgba(0,0,0,0.50));
+      z-index: 1; /* behind content, above background */
+      pointer-events:none;
+      user-select:none;
+    }
+    .statue.left{ left: -3vw; }
+    .statue.right{ right: -3vw; transform: scaleX(-1); } /* mirror makes it feel like “guards” */
+
+    .podiumContent{
+      position:relative;
+      z-index:3;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding: clamp(30px, 5vh, 70px) clamp(22px, 4vw, 60px) clamp(18px, 4vh, 40px);
+      gap: clamp(14px, 2.2vh, 26px);
+      text-align:center;
+    }
+
+    .leagueTitle{
+      margin:0;
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      font-size: clamp(52px, 6vh, 84px);
+      letter-spacing: 1.2px;
+      color: var(--titleGold);
+      text-shadow: 0 22px 70px rgba(0,0,0,0.55);
+      width:100%;
+      text-align:center;
+      transform: translateY(-1.2vh); /* lift it away from 1st */
+    }
+
+    /* layout grid with fixed “visual positions” (keeps parity across 16:9) */
+    .podiumStage{
+      width:min(1280px, 92vw);
+      height: min(68vh, 640px);
+      position:relative;
+      display:grid;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: clamp(14px, 2.6vh, 26px);
+      align-items:center;
+      justify-items:center;
+    }
+    .stageRow{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+    .stageRow.row1{ gap: 0; }
+    .stageRow.row2{ gap: clamp(120px, 18vw, 300px); }
+    .stageRow.row3{ gap: clamp(120px, 18vw, 300px); }
+
+    .playerCard{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: clamp(14px, 2vw, 22px);
+      filter: drop-shadow(var(--softShadow));
+    }
+
+    /* Left: medals */
+    .medals{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap: 10px;
+      min-width: 78px;
+    }
+    .medalLine{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 18px;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      white-space:nowrap;
+      justify-content:flex-end;
+    }
+    .medalLine .count{
+      min-width: 16px;
+      text-align:right;
+    }
+    .medalLine .icon{
+      font-size: 24px;
+      width: 26px;
+      text-align:center;
+    }
+
+    /* Center: avatar */
+    .avatarCol{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+    }
+
+    /* IMPORTANT: no rounded borders / no square frame */
+    .avatarImg{
+      display:block;
+      object-fit: contain; /* preserves your custom PNG edges */
+      background: transparent;
+      border: none;
+      outline: none;
+      box-shadow: none;
+    }
+
+    /* Right: stats */
+    .statsCol{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:center;
+      gap: 6px;
+      min-width: 130px;
+      text-align:left;
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+    .statLine{
+      font-size: var(--statValue);
+      color: rgba(255,255,255,0.90);
+      line-height: 1.1;
+      white-space:nowrap;
+    }
+    .statLabel{
+      font-size: var(--statTitle);
+      color: rgba(255,255,255,0.70);
+      letter-spacing: 0.2px;
+      margin-right: 6px;
+    }
+
+    /* Recent wins box BELOW avatar */
+    .recentBox{
+      margin-top: 10px;
+      background: rgba(0,0,0,0.20);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap: 10px;
+      backdrop-filter: blur(8px);
+      width: var(--recentW);
+      height: var(--recentH);
+      overflow:hidden;
+    }
+    .recentIcon{
+      width: var(--recentI);
+      height: var(--recentI);
+      object-fit: contain;
+      border: none;
+      outline:none;
+      background: transparent;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+    }
+
+    /* Victory breakdown along bottom */
+    .bottomBar{
+      width:min(1280px, 92vw);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap: clamp(14px, 3vw, 26px);
+      flex-wrap:wrap;
+      margin-top: 6px;
+      color: rgba(255,255,255,0.84);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+      font-size: 13px;
+    }
+    .bottomBar strong{ color: rgba(255,255,255,0.95); }
+
+    .scrollHint{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index:4;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+    .penaltyNote{
+      position:absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index:4;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+
+    /* =========================
+       TIMELINE PAGE
+    ========================== */
+    .timelinePanel{
+      position:relative;
+      height:100vh;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+
+    .bgParchment{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background-image: url("assets/backgrounds/parchment.png");
+      background-repeat: repeat-x;
+      background-size: auto 100vh;
+      background-position: left top;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgLines{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      opacity:0.11;
+      mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 44px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 60px);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgCharacters{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      opacity:0.9;
+      background-image:none;
+      background-repeat:repeat-x;
+      background-size:auto 170px;
+      background-position:left bottom;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    .timelineLine{
+      position:absolute;
+      left: var(--timelinePad);
+      right: var(--timelinePad);
+      top: var(--tableLineY);
+      height: 2px;
+      border-top: 2px dotted rgba(70,45,20,0.45);
+      z-index:3;
+      pointer-events:none;
+      transform: translateY(-50%);
+    }
+
+    .timelineContent{
+      position:relative;
+      z-index:5;
+      height:100%;
+      padding: 26px var(--timelinePad);
+      display:flex;
+      align-items:stretch;
+    }
+
+    .nodesRow{
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      gap: var(--nodeGap);
+      height:100%;
+      padding-right: var(--timelinePad);
+    }
+
+    .matchNode{
+      width: var(--nodeW);
+      height: 100%;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .matchTableWrap{
+      position:absolute;
+      top: var(--tableLineY);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.40);
+      border: 1px solid rgba(160,120,60,0.28);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow: visible; /* IMPORTANT: allow pills to overhang */
+      color: rgba(35,22,10,0.92);
+      z-index:5;
+    }
+
+    /* actual table box inside so pills can overhang cleanly */
+    .tableInner{
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(255,255,255,0.32);
+    }
+
+    .titleRow{
+      padding: 12px 14px;
+      background: rgba(214,180,90,0.16);
+      border-bottom: 1px solid rgba(160,120,60,0.18);
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      letter-spacing: 0.7px;
+      font-size: 16px;
+      color: rgba(45,28,12,0.92);
+      text-align:center;
+    }
+
+    .pill{
+      position:absolute;
+      top: -12px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(160,120,60,0.24);
+      border-radius: 999px;
+      font-weight: 900;
+      color: rgba(35,22,10,0.88);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .pill.left{ left: 14px; }
+    .pill.right{ right: 14px; }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      table-layout: fixed;
+    }
+    thead th{
+      text-align:left;
+      padding: 10px 12px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity:0.88;
+      border-bottom: 1px solid rgba(160,120,60,0.14);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(160,120,60,0.10);
+      vertical-align:middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    /* widen Civ so it never spills */
+    .tdPoints{ font-weight: 900; width: 86px; }
+    .tdPlayer{ font-weight: 900; width: 120px; }
+    .tdScore{ width: 82px; font-variant-numeric: tabular-nums; }
+    .tdLeader{ width: 190px; }
+    .tdCiv{ width: 190px; }
+
+    /* under-table podium stack (bigger now) */
+    .nodePodium{
+      position:absolute;
+      top: calc(var(--tableLineY) + 16vh);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: var(--tGapRow);
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .placeBlock{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 18px;
+      filter: drop-shadow(0 14px 26px rgba(0,0,0,0.18));
+    }
+
+    .placeIcon{
+      width: 44px;
+      display:flex;
+      justify-content:center;
+      font-size: 28px;
+      transform: translateY(-2px);
+    }
+
+    /* IMPORTANT: no frames/borders for your custom avatar PNGs */
+    .pAvatar, .pCiv{
+      display:block;
+      object-fit: contain;
+      background: transparent;
+      border: none;
+      outline:none;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.16);
+    }
+
+    /* sizes */
+    .p1 .pAvatar{ width: var(--t1); height: var(--t1); }
+    .p1 .pCiv{ width: var(--t1); height: var(--t1); margin-left: var(--tGapPair); }
+
+    .p2 .pAvatar{ width: var(--t2); height: var(--t2); }
+    .p2 .pCiv{ width: var(--t2); height: var(--t2); margin-left: var(--tGapPair); }
+
+    .p3 .pAvatar{ width: var(--t3); height: var(--t3); }
+    .p3 .pCiv{ width: var(--t3); height: var(--t3); margin-left: var(--tGapPair); }
+
+    /* ensure the PAIR midpoint lines up under table centre */
+    .pairCenter{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* responsive safety */
+    @media (max-height: 860px){
+      :root{
+        --tableLineY: 42%;
+        --t1: clamp(130px, 14vh, 200px);
+        --t2: clamp(108px, 12vh, 170px);
+        --t3: clamp(98px, 11vh, 150px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroller" tabindex="0" aria-label="Zika Civ League horizontal scroller">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    /* ========= SETTINGS ========= */
+    const MISSED_GAME_PENALTY_AMOUNT = 0.25;
+
+    /* Wheel-scroller tuning:
+       - This fixes the “scroll faster = moves slower” feeling.
+       - It converts wheel input into a velocity and applies friction smoothly.
+    */
+    const WHEEL_TO_VELOCITY = 1.35;   // overall sensitivity
+    const MAX_VELOCITY = 3400;        // px/s cap
+    const FRICTION = 0.88;            // closer to 1 = longer glide
+    const STOP_EPS = 8;               // stop threshold
+
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+    const safeText = (s) => (s ?? "").toString();
+
+    function parseUKDateKey(dateUK){
+      const [dd, mm, yyyy] = safeText(dateUK).split("/");
+      return `${yyyy}${mm}${dd}`;
+    }
+    function byId(list){
+      const m = new Map();
+      for(const x of list) m.set(x.id, x);
+      return m;
+    }
+
+    /* Medal avatar variant:
+       assets/avatars/ben_gold.png etc.
+    */
+    function avatarVariant(player, medal){ // medal: "gold"|"silver"|"bronze"|null
+      if(!player?.avatarPath) return "";
+      if(!medal) return player.avatarPath;
+
+      const base = player.avatarPath.replace(/\\/g, "/");
+      const lastSlash = base.lastIndexOf("/");
+      const dir = lastSlash >= 0 ? base.slice(0, lastSlash + 1) : "";
+      return `${dir}${player.id}_${medal}.png`;
+    }
+
+    function standingMedal(rank){
+      if(rank === 1) return "gold";
+      if(rank === 2) return "silver";
+      if(rank === 3) return "bronze";
+      return null;
+    }
+
+    /* Winner forced to place 1; others by score desc */
+    function computePlacements(match){
+      const entries = [...match.entries];
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+
+      others.sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if(winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for(let i=0;i<others.length;i++){
+        ordered.push({ ...others[i], place: i+2 });
+      }
+
+      const n = ordered.length;
+      for(const o of ordered){
+        o.points = (n - o.place + 1);
+      }
+      return ordered;
+    }
+
+    function victoryTypeBreakdown(matches){
+      const counts = new Map();
+      for(const m of matches){
+        const vt = safeText(m.victoryType) + " Victory";
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([k,v]) => ({ victoryType:k, count:v, pct:v/total }));
+      rows.sort((a,b) => b.count - a.count);
+      return rows;
+    }
+
+    function pct(x){ return `${Math.round(x*100)}%`; }
+
+    function buildTotals(players, matches){
+      const totals = new Map();
+      for(const p of players){
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          games: 0,
+          totalPoints: 0,
+          wins: 0,
+          medals: { gold:0, silver:0, bronze:0 },
+          avgPoints: 0,
+          rating: 0
+        });
+      }
+
+      for(const match of matches){
+        const ordered = computePlacements(match);
+        for(const o of ordered){
+          const t = totals.get(o.playerId);
+          if(!t) continue;
+          t.games += 1;
+          t.totalPoints += (o.points ?? 0);
+          if(o.place === 1) t.wins += 1;
+          if(o.place === 1) t.medals.gold += 1;
+          if(o.place === 2) t.medals.silver += 1;
+          if(o.place === 3) t.medals.bronze += 1;
+        }
+      }
+
+      const totalGames = matches.length || 0;
+      const rows = [...totals.values()].map(t => {
+        const avgPoints = t.games ? (t.totalPoints / t.games) : 0;
+        const playedFrac = totalGames ? (t.games / totalGames) : 0;
+        const missedFrac = 1 - playedFrac;
+        const penalty = missedFrac * MISSED_GAME_PENALTY_AMOUNT;
+        const multiplier = 1 - penalty;
+        const rating = avgPoints * multiplier;
+        return { ...t, avgPoints, rating };
+      });
+
+      rows.sort((a,b) => b.rating - a.rating);
+      return rows;
+    }
+
+    /* Recent wins (leader avatars) for each player: newest first */
+    function recentWinsForPlayer(playerId, matchesDesc, n=5){
+      const out = [];
+      for(const m of matchesDesc){
+        if(m.winnerPlayerId !== playerId) continue;
+
+        // winner entry contains leaderName and possibly civLeaderAvatarPath
+        const winnerEntry = (m.entries || []).find(e => e.playerId === playerId);
+        if(!winnerEntry) continue;
+
+        out.push({
+          leaderName: winnerEntry.leaderName || "",
+          civLeaderAvatarPath: winnerEntry.civLeaderAvatarPath || ""
+        });
+        if(out.length >= n) break;
+      }
+      return out;
+    }
+
+    function renderPodium(totals, matchesDesc, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "podiumPanel";
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "bgMap" }));
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "mapTint" }));
+
+      // statues
+      const qin = document.createElement("img");
+      qin.className = "statue left";
+      qin.src = "assets/artwork/qin_shi_huang_statue.png";
+      qin.alt = "Qin Shi Huang statue";
+      panel.appendChild(qin);
+
+      const gil = document.createElement("img");
+      gil.className = "statue right";
+      gil.src = "assets/artwork/gilgamesh_statue.png";
+      gil.alt = "Gilgamesh statue";
+      panel.appendChild(gil);
+
+      const content = document.createElement("div");
+      content.className = "podiumContent";
+      panel.appendChild(content);
+
+      const title = document.createElement("h1");
+      title.className = "leagueTitle";
+      title.textContent = "ZIKA CIV LEAGUE";
+      content.appendChild(title);
+
+      const stage = document.createElement("div");
+      stage.className = "podiumStage";
+      content.appendChild(stage);
+
+      const row1 = document.createElement("div"); row1.className = "stageRow row1";
+      const row2 = document.createElement("div"); row2.className = "stageRow row2";
+      const row3 = document.createElement("div"); row3.className = "stageRow row3";
+      stage.appendChild(row1); stage.appendChild(row2); stage.appendChild(row3);
+
+      const top5 = totals.slice(0, 5);
+
+      function sizeForRank(rank){
+        return getComputedStyle(document.documentElement).getPropertyValue(`--a${rank}`).trim();
+      }
+      function recentIconForRank(rank){
+        // icon scales with avatar size; clamp keeps them usable
+        const map = {1: 56, 2: 44, 3: 44, 4: 40, 5: 40};
+        return `clamp(${Math.round(map[rank]*0.75)}px, ${Math.round(map[rank]*0.9)}px, ${map[rank]}px)`;
+      }
+
+      function playerCard(t, rank){
+        const wrap = document.createElement("div");
+        wrap.className = "playerCard";
+
+        // medals left
+        const medals = document.createElement("div");
+        medals.className = "medals";
+        medals.appendChild(medalLine(t.medals.gold, "🏆"));
+        medals.appendChild(medalLine(t.medals.silver, "🥈"));
+        medals.appendChild(medalLine(t.medals.bronze, "🥉"));
+        wrap.appendChild(medals);
+
+        // avatar middle + recent
+        const avatarCol = document.createElement("div");
+        avatarCol.className = "avatarCol";
+
+        const p = playersMap.get(t.playerId);
+        const medal = standingMedal(rank);
+        const img = document.createElement("img");
+        img.className = "avatarImg";
+        img.style.width = sizeForRank(rank);
+        img.style.height = sizeForRank(rank);
+        img.src = avatarVariant(p, medal);
+        img.alt = `${t.displayName} avatar`;
+        img.onerror = () => { img.src = p?.avatarPath || ""; };
+        avatarCol.appendChild(img);
+
+        // recent box below avatar (always fits 5)
+        const recent = document.createElement("div");
+        recent.className = "recentBox";
+
+        // force the box to fit exactly 5 icons
+        const iconSize = recentIconForRank(rank);
+        recent.style.setProperty("--recentI", iconSize);
+
+        // compute a width that always fits 5 icons
+        // 5 icons + 4 gaps (10px) + padding (24px)
+        recent.style.setProperty("--recentW", `calc((5 * var(--recentI)) + (4 * 10px) + 24px)`);
+        // match height to avatar feel
+        recent.style.setProperty("--recentH", `calc(var(--recentI) + 20px)`);
+
+        const wins = recentWinsForPlayer(t.playerId, matchesDesc, 5);
+        for(let i=0;i<5;i++){
+          const w = wins[i];
+          const ic = document.createElement("img");
+          ic.className = "recentIcon";
+          if(w?.civLeaderAvatarPath){
+            ic.src = w.civLeaderAvatarPath;
+            ic.alt = w.leaderName || "Leader";
+            ic.onerror = () => { ic.style.display = "none"; };
+          } else {
+            ic.style.opacity = "0";
+            ic.alt = "";
+          }
+          recent.appendChild(ic);
+        }
+        avatarCol.appendChild(recent);
+
+        wrap.appendChild(avatarCol);
+
+        // stats right
+        const stats = document.createElement("div");
+        stats.className = "statsCol";
+        const winRate = t.games ? (t.wins / t.games) : 0;
+        stats.appendChild(statLine("rating", t.rating.toFixed(2)));
+        stats.appendChild(statLine("avg pts", t.avgPoints.toFixed(2)));
+        stats.appendChild(statLine("win", pct(winRate)));
+        wrap.appendChild(stats);
+
+        return wrap;
+
+        function medalLine(count, icon){
+          const line = document.createElement("div");
+          line.className = "medalLine";
+          const c = document.createElement("div");
+          c.className = "count";
+          c.textContent = String(count);
+          const i = document.createElement("div");
+          i.className = "icon";
+          i.textContent = icon;
+          line.appendChild(c);
+          line.appendChild(i);
+          return line;
+        }
+        function statLine(label, value){
+          const div = document.createElement("div");
+          div.className = "statLine";
+          div.innerHTML = `<span class="statLabel">${label}</span>${value}`;
+          return div;
+        }
+      }
+
+      if(top5[0]) row1.appendChild(playerCard(top5[0], 1));
+      if(top5[1]) row2.appendChild(playerCard(top5[1], 2));
+      if(top5[2]) row2.appendChild(playerCard(top5[2], 3));
+      if(top5[3]) row3.appendChild(playerCard(top5[3], 4));
+      if(top5[4]) row3.appendChild(playerCard(top5[4], 5));
+
+      // bottom victory breakdown row
+      const breakdown = victoryTypeBreakdown(matchesDesc);
+      const topV = breakdown[0];
+
+      const bottom = document.createElement("div");
+      bottom.className = "bottomBar";
+      bottom.innerHTML = `
+        <span><strong>Most common victory:</strong> ${topV ? `${topV.victoryType} (${Math.round(topV.pct*100)}%)` : "—"}</span>
+        ${breakdown.slice(0,8).map(r => `<span><strong>${r.victoryType}:</strong> ${r.count} (${Math.round(r.pct*100)}%)</span>`).join("")}
+      `;
+      content.appendChild(bottom);
+
+      const hint = document.createElement("div");
+      hint.className = "scrollHint";
+      hint.textContent = "Scroll → to view match timeline";
+      panel.appendChild(hint);
+
+      const note = document.createElement("div");
+      note.className = "penaltyNote";
+      note.textContent = "miss 50% of games, you get a 12.5% average score penalty";
+      panel.appendChild(note);
+
+      return panel;
+    }
+
+    function renderTimeline(matchesDesc, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "timelinePanel";
+
+      const bgA = document.createElement("div");
+      bgA.className = "bgParchment";
+      bgA.dataset.parallax = "0.10";
+
+      const bgB = document.createElement("div");
+      bgB.className = "bgLines";
+      bgB.dataset.parallax = "0.16";
+
+      const bgC = document.createElement("div");
+      bgC.className = "bgCharacters";
+      bgC.dataset.parallax = "0.24";
+
+      panel.appendChild(bgA);
+      panel.appendChild(bgB);
+      panel.appendChild(bgC);
+
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "timelineLine" }));
+
+      const content = document.createElement("div");
+      content.className = "timelineContent";
+      panel.appendChild(content);
+
+      const row = document.createElement("div");
+      row.className = "nodesRow";
+      content.appendChild(row);
+
+      // newest -> oldest left to right, and Match #1 is newest
+      for(let i=0;i<matchesDesc.length;i++){
+        const match = matchesDesc[i];
+        const matchNo = i + 1;
+
+        const node = document.createElement("div");
+        node.className = "matchNode";
+
+        const wrap = document.createElement("div");
+        wrap.className = "matchTableWrap";
+
+        // pills that overhang
+        const pillL = document.createElement("div");
+        pillL.className = "pill left";
+        pillL.textContent = `Match #${matchNo}`;
+
+        const pillR = document.createElement("div");
+        pillR.className = "pill right";
+        pillR.textContent = match.dateUK;
+
+        wrap.appendChild(pillL);
+        wrap.appendChild(pillR);
+
+        const inner = document.createElement("div");
+        inner.className = "tableInner";
+        wrap.appendChild(inner);
+
+        // Title uses winner name + victory type
+        const winnerName = (() => {
+          const p = playersMap.get(match.winnerPlayerId);
+          return p?.displayName || match.winnerPlayerId || "Winner";
+        })();
+        const title = document.createElement("div");
+        title.className = "titleRow";
+        title.textContent = `${winnerName.toUpperCase()}'S ${safeText(match.victoryType).toUpperCase()} VICTORY`;
+        inner.appendChild(title);
+
+        const ordered = computePlacements(match);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th style="width:86px">Points</th>
+              <th style="width:120px">Player</th>
+              <th style="width:82px">Score</th>
+              <th style="width:190px">Leader</th>
+              <th style="width:190px">Civ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = $("tbody", table);
+
+        for(const r of ordered){
+          const p = playersMap.get(r.playerId);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="tdPoints">${r.points} pts</td>
+            <td class="tdPlayer">${p ? p.displayName : r.playerId}</td>
+            <td class="tdScore"><strong>${r.score ?? 0}</strong></td>
+            <td class="tdLeader">${safeText(r.leaderName || "")}</td>
+            <td class="tdCiv">${safeText(r.civName || "")}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+        inner.appendChild(table);
+        node.appendChild(wrap);
+
+        // under-table podium: bigger, midpoint centred
+        const podium = document.createElement("div");
+        podium.className = "nodePodium";
+
+        const p1 = ordered.find(x => x.place === 1);
+        const p2 = ordered.find(x => x.place === 2);
+        const p3 = ordered.find(x => x.place === 3);
+
+        podium.appendChild(placeBlock("🏆", p1, "gold", "p1"));
+        podium.appendChild(placeBlock("🥈", p2, "silver", "p2"));
+        podium.appendChild(placeBlock("🥉", p3, "bronze", "p3"));
+
+        node.appendChild(podium);
+        row.appendChild(node);
+      }
+
+      return panel;
+
+      function placeBlock(iconChar, entry, medal, sizeClass){
+        const wrap = document.createElement("div");
+        wrap.className = `placeBlock ${sizeClass}`;
+
+        const icon = document.createElement("div");
+        icon.className = "placeIcon";
+        icon.textContent = iconChar;
+        wrap.appendChild(icon);
+
+        const pair = document.createElement("div");
+        pair.className = "pairCenter";
+
+        if(entry){
+          const p = playersMap.get(entry.playerId);
+
+          const pImg = document.createElement("img");
+          pImg.className = "pAvatar";
+          pImg.src = avatarVariant(p, medal);
+          pImg.alt = `${p?.displayName || entry.playerId} avatar`;
+          pImg.onerror = () => { pImg.src = p?.avatarPath || ""; };
+          pair.appendChild(pImg);
+
+          const cImg = document.createElement("img");
+          cImg.className = "pCiv";
+          if(entry.civLeaderAvatarPath){
+            cImg.src = entry.civLeaderAvatarPath;
+          } else {
+            // keep empty space if missing so layout stays consistent
+            cImg.style.opacity = "0";
+          }
+          cImg.alt = `${safeText(entry.leaderName)} avatar`;
+          cImg.onerror = () => { cImg.style.opacity = "0"; };
+          pair.appendChild(cImg);
+        }
+        wrap.appendChild(pair);
+        return wrap;
+      }
+    }
+
+    async function main(){
+      const res = await fetch("data.json", { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      const players = data.players || [];
+      let matches = (data.matches || []).slice();
+
+      // newest -> oldest
+      matches.sort((a,b) => parseUKDateKey(b.dateUK).localeCompare(parseUKDateKey(a.dateUK)));
+
+      const playersMap = byId(players);
+      const totals = buildTotals(players, matches);
+
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+      row.appendChild(renderPodium(totals, matches, playersMap));
+
+      const timeline = renderTimeline(matches, playersMap);
+      row.appendChild(timeline);
+
+      // timeline width scales for many games
+      const css = getComputedStyle(document.documentElement);
+      const nodeW = parseFloat(css.getPropertyValue("--nodeW")) || 620;
+      const gap = parseFloat(css.getPropertyValue("--nodeGap")) || 120;
+      const pad = parseFloat(css.getPropertyValue("--timelinePad")) || 170;
+      const nodesCount = matches.length;
+
+      const nodesTotal = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+      const desired = pad + nodesTotal + pad;
+      timeline.style.width = Math.max(window.innerWidth, desired) + "px";
+
+      /* ===== wheel -> velocity horizontal scroll (fixes your slow/strange behaviour) ===== */
+      const scroller = document.getElementById("scroller");
+      scroller.focus();
+
+      let vx = 0; // px/s
+      let raf = null;
+      let lastT = null;
+
+      function normWheelDelta(e){
+        // convert wheel delta to pixels consistently
+        let d = e.deltaY;
+        if(e.deltaMode === 1) d *= 40;                 // lines -> px
+        else if(e.deltaMode === 2) d *= window.innerHeight; // pages -> px
+        return d;
+      }
+
+      function tick(t){
+        if(lastT == null) lastT = t;
+        const dt = Math.min(0.05, (t - lastT) / 1000); // cap step for stability
+        lastT = t;
+
+        if(Math.abs(vx) < STOP_EPS){
+          vx = 0;
+          raf = null;
+          lastT = null;
+          return;
+        }
+
+        scroller.scrollLeft += vx * dt;
+        vx *= Math.pow(FRICTION, dt * 60); // friction feels consistent across refresh rates
+        raf = requestAnimationFrame(tick);
+      }
+
+      function wheelToHorizontal(e){
+        if(e.shiftKey) return;
+        const absY = Math.abs(e.deltaY);
+        const absX = Math.abs(e.deltaX);
+
+        // if user scrolls primarily vertically, we translate to horizontal
+        if(absY > absX){
+          e.preventDefault();
+
+          const dpx = normWheelDelta(e);
+          // add velocity based on input (sign preserved)
+          vx += dpx * WHEEL_TO_VELOCITY;
+
+          // clamp velocity so it never “fights back” on fast wheels
+          vx = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, vx));
+
+          if(!raf) raf = requestAnimationFrame(tick);
+        }
+      }
+
+      scroller.addEventListener("wheel", wheelToHorizontal, { passive:false });
+      window.addEventListener("wheel", wheelToHorizontal, { passive:false });
+
+      /* ===== parallax ===== */
+      function updateParallax(){
+        const x = scroller.scrollLeft;
+        const layers = $$("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", updateParallax);
+      updateParallax();
+
+      window.addEventListener("resize", () => {
+        const css2 = getComputedStyle(document.documentElement);
+        const nodeW2 = parseFloat(css2.getPropertyValue("--nodeW")) || 620;
+        const gap2 = parseFloat(css2.getPropertyValue("--nodeGap")) || 120;
+        const pad2 = parseFloat(css2.getPropertyValue("--timelinePad")) || 170;
+        const nodesTotal2 = nodesCount * nodeW2 + Math.max(0, nodesCount - 1) * gap2;
+        const desired2 = pad2 + nodesTotal2 + pad2;
+        timeline.style.width = Math.max(window.innerWidth, desired2) + "px";
+      });
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family:system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0;">ZIKA CIV LEAGUE</h1>
+          <p style="opacity:.9; line-height:1.5;">Could not load <code>data.json</code>. Make sure you're using <code>python -m http.server</code>.</p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIKA CIV LEAGUE</title>
+
+  <style>
+    @font-face{
+      font-family: "ZikaTitle";
+      src: url("assets/fonts/OPTIColumna-Solid.otf") format("opentype");
+      font-display: swap;
+    }
+
+    :root{
+      /* ========= global ========= */
+      --titleGold: #d5ac56;
+      --ink: rgba(255,255,255,0.92);
+      --inkDim: rgba(255,255,255,0.78);
+
+      --shadow: 0 22px 65px rgba(0,0,0,0.40);
+      --softShadow: 0 10px 30px rgba(0,0,0,0.22);
+
+      /* ========= fixed 16:9 parity =========
+         We treat layout as “designed for 16:9” and scale uniformly.
+         This keeps positional parity between 1080p/1440p/4K.
+      */
+      --designW: 2560;
+      --designH: 1440;
+      --scale: min(calc(100vw / (var(--designW) * 1px)), calc(100vh / (var(--designH) * 1px)));
+
+      /* ========= podium (page 1) ========= */
+      --titleSize: calc(92px * var(--scale));
+      --titleTopPad: calc(38px * var(--scale));
+
+      --p1Avatar: calc(250px * var(--scale));
+      --p2Avatar: calc(190px * var(--scale));
+      --p3Avatar: calc(190px * var(--scale));
+      --p4Avatar: calc(165px * var(--scale));
+      --p5Avatar: calc(165px * var(--scale));
+
+      --sideColW: calc(170px * var(--scale)); /* trophies / stats column width */
+      --sideRowGap: calc(14px * var(--scale));
+
+      --recentBoxW: calc(310px * var(--scale));
+      --recentBoxH: calc(58px * var(--scale));
+      --recentIcon: calc(44px * var(--scale));
+      --recentGap: calc(12px * var(--scale));
+
+      --podiumYTop: calc(300px * var(--scale)); /* where #1 block starts */
+      --row2Y: calc(640px * var(--scale));
+      --row3Y: calc(1040px * var(--scale));
+
+      --row2XOffset: calc(560px * var(--scale));
+      --row3XOffset: calc(560px * var(--scale));
+
+      /* statues */
+      --statueW: calc(900px * var(--scale)); /* ~2x-ish vs prior */
+      --statueBottom: calc(-40px * var(--scale));
+      --statueInset: calc(-170px * var(--scale)); /* closer to middle */
+
+      /* bottom victory summary */
+      --victoryBottom: calc(22px * var(--scale));
+      --victoryFont: calc(16px * var(--scale));
+      --victoryGap: calc(22px * var(--scale));
+
+      /* ========= timeline (page 2) ========= */
+      --timelinePad: calc(210px * var(--scale));
+      --nodeW: calc(740px * var(--scale));
+      --nodeGap: calc(140px * var(--scale));
+
+      /* table vertical placement */
+      --tableTop: calc(210px * var(--scale));
+
+      /* podium under-table sizing (ideal-ish) */
+      --tPodiumTop: calc(760px * var(--scale));
+      --tRowGap: calc(190px * var(--scale));
+
+      /* “ideal sizing” = bigger avatars + bigger overall block */
+      --tPlayer: calc(210px * var(--scale));
+      --tCiv:    calc(210px * var(--scale));
+      --tPlayer2: calc(170px * var(--scale));
+      --tCiv2:    calc(170px * var(--scale));
+      --tPlayer3: calc(150px * var(--scale));
+      --tCiv3:    calc(150px * var(--scale));
+
+      --tPairGap: calc(44px * var(--scale)); /* gap between player and civ */
+      --tColXGap: calc(64px * var(--scale)); /* gap between columns in a row */
+      --tMedalW: calc(44px * var(--scale));
+      --tMedalFont: calc(30px * var(--scale));
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#05060a;
+      color:var(--ink);
+    }
+
+    /* ===== horizontal scroller ===== */
+    #scroller{
+      height:100vh;
+      overflow-x:auto;
+      overflow-y:hidden;
+      -webkit-overflow-scrolling: touch;
+      outline:none;
+      scroll-behavior:auto; /* important: do not fight drag scrollbar / middle click */
+    }
+    #row{
+      display:flex;
+      height:100%;
+      width:max-content;
+    }
+
+    /* ============================================================
+       PAGE 1: MAIN LEADERBOARD
+       ============================================================ */
+    .podiumPanel{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      flex:0 0 100vw;
+      overflow:hidden;
+    }
+
+    /* background: we set images via JS with cache-bust, but keep a safe fallback here */
+    .bgMap{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background-size:cover;
+      background-position:center;
+      transform: translate3d(0,0,0);
+      will-change: transform;
+    }
+    .mapTint{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background: rgba(5,10,18,0.22);
+    }
+
+    .statue{
+      position:absolute;
+      bottom: var(--statueBottom);
+      width: var(--statueW);
+      height:auto;
+      z-index: 2; /* above map, below UI */
+      pointer-events:none;
+      filter: drop-shadow(0 28px 70px rgba(0,0,0,0.40));
+      opacity: 0.98;
+      transform: translate3d(0,0,0);
+    }
+    .statue.left{
+      left: var(--statueInset);
+    }
+    .statue.right{
+      right: var(--statueInset);
+      transform: translate3d(0,0,0); /* explicitly NOT flipped */
+    }
+
+    .podiumTitle{
+      position:absolute;
+      top: var(--titleTopPad);
+      left:50%;
+      transform: translateX(-50%);
+      z-index:3;
+      margin:0;
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      font-size: var(--titleSize);
+      letter-spacing: 1.2px;
+      color: var(--titleGold);
+      text-shadow: 0 22px 70px rgba(0,0,0,0.45);
+      white-space:nowrap;
+      user-select:none;
+    }
+
+    /* Victory summary along bottom */
+    .victoryBar{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom: var(--victoryBottom);
+      z-index: 4;
+      display:flex;
+      gap: var(--victoryGap);
+      justify-content:center;
+      align-items:center;
+      font-size: var(--victoryFont);
+      color: rgba(255,255,255,0.86);
+      text-shadow: 0 14px 30px rgba(0,0,0,0.45);
+      pointer-events:none;
+      padding: 0 calc(30px * var(--scale));
+      flex-wrap:wrap;
+    }
+    .victoryBar strong{ color: rgba(255,255,255,0.95); }
+
+    .scrollHint{
+      position:absolute;
+      right: calc(18px * var(--scale));
+      bottom: calc(18px * var(--scale));
+      z-index:5;
+      font-size: calc(12px * var(--scale));
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: calc(10px * var(--scale)) calc(12px * var(--scale));
+      border-radius: calc(12px * var(--scale));
+      backdrop-filter: blur(8px);
+      user-select:none;
+      pointer-events:none;
+    }
+    .bottomLeftNote{
+      position:absolute;
+      left: calc(18px * var(--scale));
+      bottom: calc(18px * var(--scale));
+      z-index:5;
+      font-size: calc(12px * var(--scale));
+      color: rgba(255,255,255,0.74);
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: calc(10px * var(--scale)) calc(12px * var(--scale));
+      border-radius: calc(12px * var(--scale));
+      backdrop-filter: blur(8px);
+      user-select:none;
+      pointer-events:none;
+    }
+
+    /* Player blocks: absolute placed around center for intentional symmetry */
+    .pBlock{
+      position:absolute;
+      left:50%;
+      z-index:4;
+      transform: translateX(-50%);
+      display:grid;
+      grid-template-columns: var(--sideColW) auto var(--sideColW);
+      align-items:center;
+      column-gap: calc(26px * var(--scale));
+      pointer-events:none;
+    }
+    .pBlock.p1{ top: var(--podiumYTop); }
+    .pBlock.p2{ top: var(--row2Y); transform: translateX(calc(-50% - var(--row2XOffset))); }
+    .pBlock.p3{ top: var(--row2Y); transform: translateX(calc(-50% + var(--row2XOffset))); }
+    .pBlock.p4{ top: var(--row3Y); transform: translateX(calc(-50% - var(--row3XOffset))); }
+    .pBlock.p5{ top: var(--row3Y); transform: translateX(calc(-50% + var(--row3XOffset))); }
+
+    /* Left trophies column */
+    .trophyCol{
+      width: var(--sideColW);
+      display:flex;
+      flex-direction:column;
+      gap: var(--sideRowGap);
+      align-items:flex-end;
+      justify-content:center;
+      padding-right: calc(6px * var(--scale));
+    }
+    .trophyLine{
+      display:flex;
+      align-items:center;
+      gap: calc(10px * var(--scale));
+      font-weight: 900;
+      font-size: calc(22px * var(--scale));
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      white-space:nowrap;
+      line-height:1;
+    }
+    .trophyCount{
+      width: calc(24px * var(--scale));
+      text-align:right;
+      opacity:0.95;
+    }
+
+    /* trophy icon stack (up to 10) */
+    .trophyStackIcons{
+      position:relative;
+      width: calc(58px * var(--scale));
+      height: calc(34px * var(--scale));
+    }
+    .trophyStackIcons span{
+      position:absolute;
+      top:0;
+      right:0;
+      font-size: calc(30px * var(--scale));
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.30));
+    }
+
+    /* Avatar (center) */
+    .avatarCore{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+    }
+
+    .avatarImg{
+      display:block;
+      border-radius: 50%;
+      object-fit: cover;
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 30px 90px rgba(0,0,0,0.40);
+      /* IMPORTANT: remove square borders entirely */
+      border: none !important;
+      outline: none !important;
+    }
+
+    .recentWins{
+      margin-top: calc(16px * var(--scale));
+      width: var(--recentBoxW);
+      height: var(--recentBoxH);
+      background: rgba(0,0,0,0.26);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: calc(14px * var(--scale));
+      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .recentRow{
+      display:flex;
+      gap: var(--recentGap);
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      padding: 0 calc(12px * var(--scale));
+    }
+    .recentRow img{
+      width: var(--recentIcon);
+      height: var(--recentIcon);
+      border-radius: 50%;
+      object-fit: cover;
+      display:block;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.30);
+      border:none;
+    }
+    .recentPlaceholder{
+      width: var(--recentIcon);
+      height: var(--recentIcon);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.10);
+      border: 1px dashed rgba(255,255,255,0.16);
+    }
+
+    /* Stats column (right) */
+    .statsCol{
+      width: var(--sideColW);
+      display:flex;
+      flex-direction:column;
+      gap: var(--sideRowGap);
+      align-items:flex-start;
+      justify-content:center;
+      padding-left: calc(6px * var(--scale));
+      color: rgba(255,255,255,0.90);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      font-size: calc(16px * var(--scale));
+      line-height:1.05;
+      font-weight: 800;
+    }
+    .statsCol .label{
+      font-weight: 900;
+      opacity: 0.92;
+    }
+    .statsCol .val{
+      font-weight: 900;
+      opacity: 0.98;
+    }
+
+    /* ============================================================
+       PAGE 2: TIMELINE / PARCHMENT
+       ============================================================ */
+    .timelinePanel{
+      position:relative;
+      height:100vh;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+
+    .bgParchment{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background-repeat: repeat-x;
+      background-size: auto 100vh;
+      background-position: left top;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgLines{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      opacity:0.11;
+      mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 44px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 60px);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgCharacters{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      opacity:0.9;
+      background-image:none;
+      background-repeat:repeat-x;
+      background-size:auto calc(210px * var(--scale));
+      background-position:left bottom;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    .timelineLine{
+      position:absolute;
+      left: var(--timelinePad);
+      right: var(--timelinePad);
+      top: calc(var(--tableTop) + calc(170px * var(--scale))); /* intersects table vertically */
+      height: 2px;
+      border-top: 2px dotted rgba(70,45,20,0.45);
+      z-index:3; /* behind tables (tables are z=5) */
+      pointer-events:none;
+      transform: translateY(-50%);
+    }
+
+    .timelineContent{
+      position:relative;
+      z-index:5;
+      height:100%;
+      padding: 0 var(--timelinePad);
+      display:flex;
+      align-items:stretch;
+    }
+    .nodesRow{
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      gap: var(--nodeGap);
+      height:100%;
+      padding-right: var(--timelinePad);
+    }
+
+    .matchNode{
+      width: var(--nodeW);
+      height: 100%;
+      position:relative;
+    }
+
+    /* Table wrap */
+    .matchTableWrap{
+      position:absolute;
+      top: var(--tableTop);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      border-radius: calc(18px * var(--scale));
+      background: rgba(255,255,255,0.36);
+      border: 1px solid rgba(160,120,60,0.28);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow: visible; /* allow pills to overhang */
+      color: rgba(35,22,10,0.92);
+      z-index:5;
+    }
+
+    .matchPills{
+      position:absolute;
+      top: calc(-18px * var(--scale));
+      left: calc(14px * var(--scale));
+      right: calc(14px * var(--scale));
+      display:flex;
+      justify-content:space-between;
+      pointer-events:none;
+      z-index:6;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height: calc(34px * var(--scale));
+      padding: 0 calc(14px * var(--scale));
+      border-radius: 999px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(160,120,60,0.26);
+      color: rgba(35,22,10,0.92);
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+      font-size: calc(13px * var(--scale));
+      white-space:nowrap;
+    }
+
+    .matchTitle{
+      padding: calc(14px * var(--scale)) calc(16px * var(--scale));
+      background: rgba(214,180,90,0.22);
+      border-bottom: 1px solid rgba(160,120,60,0.18);
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      letter-spacing: 0.7px;
+      font-size: calc(18px * var(--scale));
+      color: rgba(45,28,12,0.92);
+      text-align:center;
+      border-top-left-radius: calc(18px * var(--scale));
+      border-top-right-radius: calc(18px * var(--scale));
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: calc(15px * var(--scale));
+      table-layout: fixed;
+    }
+
+    /* FIX #3: make the header tint full-width by tinting the THEAD row,
+       and keeping TH backgrounds transparent.
+    */
+    thead tr{
+      background: rgba(214,180,90,0.20);
+    }
+    thead th{
+      background: transparent;
+      text-align:left;
+      padding: calc(10px * var(--scale)) calc(12px * var(--scale));
+      font-size: calc(11px * var(--scale));
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity:0.90;
+      border-bottom: 1px solid rgba(160,120,60,0.14);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody td{
+      padding: calc(10px * var(--scale)) calc(12px * var(--scale));
+      border-bottom: 1px solid rgba(160,120,60,0.10);
+      vertical-align:middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    .tdPoints{ font-weight: 900; width: calc(86px * var(--scale)); }
+    .tdPlayer{ font-weight: 900; width: calc(150px * var(--scale)); }
+    .tdScore{ width: calc(110px * var(--scale)); font-variant-numeric: tabular-nums; }
+    .tdLeader{ width: calc(250px * var(--scale)); }
+    .tdCiv{ width: calc(220px * var(--scale)); } /* FIX #1: wider civ column */
+
+    /* Under-table podium */
+    .nodePodium{
+      position:absolute;
+      left: 50%;
+      top: var(--tPodiumTop);
+      transform: translateX(-50%);
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: var(--tRowGap);
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .placeRow{
+      display:grid;
+      grid-template-columns: var(--tMedalW) auto;
+      align-items:center;
+      column-gap: calc(18px * var(--scale));
+    }
+    .medalIcon{
+      width: var(--tMedalW);
+      display:flex;
+      justify-content:center;
+      font-size: var(--tMedalFont);
+      filter: drop-shadow(0 12px 20px rgba(0,0,0,0.20));
+    }
+
+    /* Two avatars in a row, with their CENTERLINES aligned:
+       we put them in equal-height cells and align-items:center.
+    */
+    .pair{
+      display:grid;
+      grid-template-columns: auto auto;
+      column-gap: var(--tPairGap);
+      align-items:center; /* FIX #5: centers on same horizontal line */
+      justify-content:center;
+    }
+
+    /* IMPORTANT: no square border; just the image */
+    .tAvatar, .tCiv{
+      display:block;
+      border-radius: 50%;
+      object-fit: cover;
+      border:none;
+      outline:none;
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+    }
+
+    /* sizes by place */
+    .p1 .tAvatar{ width: var(--tPlayer); height: var(--tPlayer); }
+    .p1 .tCiv{ width: var(--tCiv); height: var(--tCiv); }
+
+    .p2 .tAvatar{ width: var(--tPlayer2); height: var(--tPlayer2); }
+    .p2 .tCiv{ width: var(--tCiv2); height: var(--tCiv2); }
+
+    .p3 .tAvatar{ width: var(--tPlayer3); height: var(--tPlayer3); }
+    .p3 .tCiv{ width: var(--tCiv3); height: var(--tCiv3); }
+
+    /* placeholder */
+    .civPlaceholder{
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.14);
+      border: 1px dashed rgba(60,40,20,0.35);
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="scroller" tabindex="0" aria-label="Zika Civ League horizontal scroller">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    /* ============================================================
+       Asset cache-bust:
+       You replaced map.png/parchment.png with same filenames.
+       Browsers often cache aggressively, so we append a version query
+       each load. This is NOT hard-coding old textures: it still loads
+       the same file path you replaced.
+    ============================================================ */
+    const ASSET_VER = Date.now();
+    const MAP_URL = `assets/backgrounds/map.png?v=${ASSET_VER}`;
+    const PARCH_URL = `assets/backgrounds/parchment.png?v=${ASSET_VER}`;
+
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+    const safeText = (s) => (s ?? "").toString();
+
+    function parseUKDateKey(dateUK){
+      const [dd, mm, yyyy] = safeText(dateUK).split("/");
+      return `${yyyy}${mm}${dd}`;
+    }
+    function byId(list){
+      const m = new Map();
+      for(const x of list) m.set(x.id, x);
+      return m;
+    }
+
+    // ===== placements: winner is always place 1; others by score desc =====
+    function computePlacements(match){
+      const entries = [...match.entries];
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+      others.sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if(winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for(let i=0;i<others.length;i++){
+        ordered.push({ ...others[i], place: i+2 });
+      }
+
+      const n = ordered.length;
+      for(const o of ordered){
+        o.points = (n - o.place + 1); // 1st gets N points, last gets 1 point
+      }
+      return ordered;
+    }
+
+    function pct(x){ return `${Math.round(x*100)}%`; }
+
+    // ===== recent-5 ranking system =====
+    function buildTotalsRecent5(players, matchesNewestFirst){
+      const totals = new Map();
+      for(const p of players){
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          allGames: 0,
+          allPoints: 0,
+          allWins: 0,
+          medals: { gold:0, silver:0, bronze:0 },
+          recentPointsList: [],  // newest->older points for last 5
+          recentGamesList: [],   // store match ids for debugging
+          recentWinsLeaders: [], // newest->older leader avatar paths (wins only)
+          recentAvgPts: 0,
+          allTimeAvgPts: 0,
+          winRate: 0
+        });
+      }
+
+      // We want to build recent 5 points by looking newest->older
+      for(const match of matchesNewestFirst){
+        const ordered = computePlacements(match);
+
+        for(const o of ordered){
+          const t = totals.get(o.playerId);
+          if(!t) continue;
+
+          // all time
+          t.allGames += 1;
+          t.allPoints += (o.points ?? 0);
+          if(o.place === 1) t.allWins += 1;
+
+          if(o.place === 1) t.medals.gold += 1;
+          if(o.place === 2) t.medals.silver += 1;
+          if(o.place === 3) t.medals.bronze += 1;
+
+          // recent-5 points list
+          if(t.recentPointsList.length < 5){
+            t.recentPointsList.push(o.points ?? 0);
+            t.recentGamesList.push(match.id);
+          }
+        }
+
+        // recent 5 wins leaders (wins only), newest->older
+        const w = ordered.find(x => x.place === 1);
+        if(w){
+          const tw = totals.get(w.playerId);
+          if(tw && tw.recentWinsLeaders.length < 5){
+            if(w.civLeaderAvatarPath) tw.recentWinsLeaders.push(w.civLeaderAvatarPath);
+          }
+        }
+      }
+
+      const rows = [...totals.values()].map(t => {
+        const recentAvgPts = t.recentPointsList.length
+          ? (t.recentPointsList.reduce((a,b)=>a+b,0) / t.recentPointsList.length)
+          : 0;
+
+        const allTimeAvgPts = t.allGames ? (t.allPoints / t.allGames) : 0;
+        const winRate = t.allGames ? (t.allWins / t.allGames) : 0;
+
+        return { ...t, recentAvgPts, allTimeAvgPts, winRate };
+      });
+
+      // Sort by recentAvgPts desc; tie-breaker allTimeAvgPts desc
+      rows.sort((a,b) =>
+        (b.recentAvgPts - a.recentAvgPts) ||
+        (b.allTimeAvgPts - a.allTimeAvgPts) ||
+        (b.winRate - a.winRate)
+      );
+
+      return rows;
+    }
+
+    function victoryTypeBreakdown(matches){
+      const counts = new Map();
+      for(const m of matches){
+        const vt = safeText(m.victoryType);
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([k,v]) => ({
+        victoryType: k.endsWith("Victory") ? k : `${k} Victory`,
+        count: v,
+        pct: v/total
+      }));
+      rows.sort((a,b) => b.count - a.count);
+      return rows;
+    }
+
+    // Safe image loader fallback
+    function setImgSafe(img, src, fallback){
+      img.src = src;
+      img.onerror = () => {
+        if(fallback && img.src !== fallback) img.src = fallback;
+      };
+    }
+
+    // ===== Trophy stack visuals =====
+    function buildTrophyStackIcons(emoji, count){
+      const wrap = document.createElement("div");
+      wrap.className = "trophyStackIcons";
+      const shown = Math.min(10, Math.max(1, count || 0)); // show at least 1 icon even for 0? (we will still show icons for 0 but count=0)
+      // If count is 0, show a single icon faintly so layout stays aligned
+      const effective = count > 0 ? shown : 1;
+
+      for(let i=effective-1;i>=0;i--){
+        const s = document.createElement("span");
+        s.textContent = emoji;
+        const dx = i * (8 * getScale());  // behind to the LEFT
+        s.style.transform = `translateX(${-dx}px)`;
+        s.style.opacity = count > 0 ? (0.55 + (i/(effective-1 || 1))*0.45) : 0.25;
+        wrap.appendChild(s);
+      }
+      return wrap;
+    }
+
+    function getScale(){
+      // Reads --scale from :root, returns number
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--scale").trim();
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : 1;
+    }
+
+    // ===== PAGE 1 render =====
+    function renderPodium(totalsSorted, matchesNewestFirst){
+      const panel = document.createElement("section");
+      panel.className = "podiumPanel";
+
+      const bg = document.createElement("div");
+      bg.className = "bgMap";
+      // IMPORTANT: use replaced map.png, cache-busted
+      bg.style.backgroundImage = `url("${MAP_URL}")`;
+      bg.dataset.parallax = "0.10"; // map parallax only
+      panel.appendChild(bg);
+
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "mapTint" }));
+
+      // statues (NOT parallax)
+      const qin = document.createElement("img");
+      qin.className = "statue left";
+      qin.alt = "Qin Shi Huang statue";
+      qin.src = "assets/artwork/qin_shi_huang_statue.png";
+      panel.appendChild(qin);
+
+      const gil = document.createElement("img");
+      gil.className = "statue right";
+      gil.alt = "Gilgamesh statue";
+      gil.src = "assets/artwork/gilgamesh_statue.png";
+      panel.appendChild(gil);
+
+      const title = document.createElement("h1");
+      title.className = "podiumTitle";
+      title.textContent = "ZIKA CIV LEAGUE";
+      panel.appendChild(title);
+
+      const top5 = totalsSorted.slice(0, 5);
+
+      // helper: per-rank sizes
+      const sizeForRank = (rank) => {
+        if(rank === 1) return getCSS("--p1Avatar");
+        if(rank === 2) return getCSS("--p2Avatar");
+        if(rank === 3) return getCSS("--p3Avatar");
+        if(rank === 4) return getCSS("--p4Avatar");
+        return getCSS("--p5Avatar");
+      };
+
+      function getCSS(varName){
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      }
+
+      function block(rank, data){
+        const wrap = document.createElement("div");
+        wrap.className = `pBlock p${rank}`;
+
+        // LEFT: trophies
+        const trophies = document.createElement("div");
+        trophies.className = "trophyCol";
+
+        const line = (count, emoji) => {
+          const l = document.createElement("div");
+          l.className = "trophyLine";
+
+          const c = document.createElement("div");
+          c.className = "trophyCount";
+          c.textContent = String(count ?? 0);
+
+          const stack = buildTrophyStackIcons(emoji, count ?? 0);
+
+          l.appendChild(c);
+          l.appendChild(stack);
+          return l;
+        };
+
+        trophies.appendChild(line(data.medals.gold, "🏆"));
+        trophies.appendChild(line(data.medals.silver, "🥈"));
+        trophies.appendChild(line(data.medals.bronze, "🥉"));
+
+        // CENTER: avatar + recent wins (always 5)
+        const core = document.createElement("div");
+        core.className = "avatarCore";
+
+        const img = document.createElement("img");
+        img.className = "avatarImg";
+        img.style.width = sizeForRank(rank);
+        img.style.height = sizeForRank(rank);
+        img.alt = `${data.displayName} avatar`;
+        setImgSafe(img, data.avatarPath, data.avatarPath);
+        core.appendChild(img);
+
+        // Recent wins box (always wide enough for 5 icons)
+        const recent = document.createElement("div");
+        recent.className = "recentWins";
+        recent.style.width = getCSS("--recentBoxW");
+        recent.style.height = getCSS("--recentBoxH");
+
+        const row = document.createElement("div");
+        row.className = "recentRow";
+
+        // Ensure exactly 5 slots
+        const wins = (data.recentWinsLeaders || []).slice(0,5);
+        while(wins.length < 5) wins.push("");
+
+        for(const w of wins){
+          if(w){
+            const ri = document.createElement("img");
+            ri.alt = "recent win leader";
+            setImgSafe(ri, w, w);
+            row.appendChild(ri);
+          }else{
+            const ph = document.createElement("div");
+            ph.className = "recentPlaceholder";
+            row.appendChild(ph);
+          }
+        }
+
+        recent.appendChild(row);
+        core.appendChild(recent);
+
+        // RIGHT: stats
+        const stats = document.createElement("div");
+        stats.className = "statsCol";
+        stats.innerHTML = `
+          <div><span class="label">Recent Avg Pts</span> <span class="val">${data.recentAvgPts.toFixed(2)}</span></div>
+          <div><span class="label">All Time Avg</span> <span class="val">${data.allTimeAvgPts.toFixed(2)}</span></div>
+          <div><span class="label">Win Rate</span> <span class="val">${pct(data.winRate)}</span></div>
+        `;
+
+        wrap.appendChild(trophies);
+        wrap.appendChild(core);
+        wrap.appendChild(stats);
+
+        return wrap;
+      }
+
+      for(let i=0;i<top5.length;i++){
+        panel.appendChild(block(i+1, top5[i]));
+      }
+
+      // Victory bar
+      const breakdown = victoryTypeBreakdown(matchesNewestFirst.slice().reverse()); // chronological not required; counts only
+      const topV = breakdown[0];
+
+      const bar = document.createElement("div");
+      bar.className = "victoryBar";
+      const pieces = [];
+      pieces.push(`<span><strong>Most common victory:</strong> ${topV ? `${topV.victoryType} (${Math.round(topV.pct*100)}%)` : "—"}</span>`);
+      for(const r of breakdown.slice(0,8)){
+        pieces.push(`<span><strong>${r.victoryType}:</strong> ${r.count} (${Math.round(r.pct*100)}%)</span>`);
+      }
+      bar.innerHTML = pieces.join("");
+      panel.appendChild(bar);
+
+      const hint = document.createElement("div");
+      hint.className = "scrollHint";
+      hint.textContent = "Scroll → to view match timeline";
+      panel.appendChild(hint);
+
+      const note = document.createElement("div");
+      note.className = "bottomLeftNote";
+      note.textContent = "Leaderboard is based off your recent 5 games";
+      panel.appendChild(note);
+
+      return panel;
+    }
+
+    // ===== PAGE 2 render =====
+    function renderTimeline(matchesNewestFirst, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "timelinePanel";
+
+      const bgA = document.createElement("div");
+      bgA.className = "bgParchment";
+      bgA.style.backgroundImage = `url("${PARCH_URL}")`;
+      bgA.dataset.parallax = "0.10";
+
+      const bgB = document.createElement("div");
+      bgB.className = "bgLines";
+      bgB.dataset.parallax = "0.16";
+
+      const bgC = document.createElement("div");
+      bgC.className = "bgCharacters";
+      bgC.dataset.parallax = "0.24";
+
+      panel.appendChild(bgA);
+      panel.appendChild(bgB);
+      panel.appendChild(bgC);
+
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "timelineLine" }));
+
+      const content = document.createElement("div");
+      content.className = "timelineContent";
+      panel.appendChild(content);
+
+      const row = document.createElement("div");
+      row.className = "nodesRow";
+      content.appendChild(row);
+
+      const N = matchesNewestFirst.length;
+
+      for(let idx=0; idx<N; idx++){
+        const match = matchesNewestFirst[idx];
+        const node = document.createElement("div");
+        node.className = "matchNode";
+
+        const ordered = computePlacements(match);
+        const winnerEntry = ordered.find(x => x.place === 1);
+        const winnerPlayer = winnerEntry ? playersMap.get(winnerEntry.playerId) : null;
+        const winnerName = winnerPlayer ? winnerPlayer.displayName : "Winner";
+        const vt = safeText(match.victoryType).endsWith("Victory") ? safeText(match.victoryType) : `${safeText(match.victoryType)} Victory`;
+
+        // FIX #4: Match #1 is oldest, newest is Match #N.
+        // We're iterating newest->oldest, so number = N - idx.
+        const matchNumber = (N - idx);
+
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "matchTableWrap";
+
+        const pills = document.createElement("div");
+        pills.className = "matchPills";
+
+        const pLeft = document.createElement("div");
+        pLeft.className = "pill";
+        pLeft.textContent = `Match #${matchNumber}`;
+
+        const pRight = document.createElement("div");
+        pRight.className = "pill";
+        pRight.textContent = safeText(match.dateUK);
+
+        pills.appendChild(pLeft);
+        pills.appendChild(pRight);
+        tableWrap.appendChild(pills);
+
+        const title = document.createElement("div");
+        title.className = "matchTitle";
+        title.textContent = `${winnerName}'s ${vt}`;
+        tableWrap.appendChild(title);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th style="width:${getScaled(86)}px">Points</th>
+              <th style="width:${getScaled(150)}px">Player</th>
+              <th style="width:${getScaled(110)}px">Score</th>
+              <th style="width:${getScaled(250)}px">Leader</th>
+              <th style="width:${getScaled(220)}px">Civ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = $("tbody", table);
+
+        for(const r of ordered){
+          const p = playersMap.get(r.playerId);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="tdPoints">${r.points} pts</td>
+            <td class="tdPlayer">${p ? p.displayName : r.playerId}</td>
+            <td class="tdScore"><strong>${r.score ?? 0}</strong></td>
+            <td class="tdLeader">${safeText(r.leaderName || "")}</td>
+            <td class="tdCiv">${safeText(r.civName || "")}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        tableWrap.appendChild(table);
+        node.appendChild(tableWrap);
+
+        // podium rows (1/2/3)
+        const podium = document.createElement("div");
+        podium.className = "nodePodium";
+
+        const p1 = ordered.find(x => x.place === 1);
+        const p2 = ordered.find(x => x.place === 2);
+        const p3 = ordered.find(x => x.place === 3);
+
+        podium.appendChild(placeRow("🏆", p1, "p1"));
+        podium.appendChild(placeRow("🥈", p2, "p2"));
+        podium.appendChild(placeRow("🥉", p3, "p3"));
+
+        node.appendChild(podium);
+        row.appendChild(node);
+      }
+
+      return panel;
+
+      function getScaled(px){
+        // approximate using current --scale
+        return Math.round(px * getScale());
+      }
+
+      function placeRow(emoji, entry, cls){
+        const wrap = document.createElement("div");
+        wrap.className = `placeRow ${cls}`;
+
+        const medal = document.createElement("div");
+        medal.className = "medalIcon";
+        medal.textContent = emoji;
+        wrap.appendChild(medal);
+
+        const pair = document.createElement("div");
+        pair.className = "pair";
+
+        if(entry){
+          const p = playersMap.get(entry.playerId);
+
+          const pImg = document.createElement("img");
+          pImg.className = "tAvatar";
+          pImg.alt = `${p?.displayName || entry.playerId} avatar`;
+          setImgSafe(pImg, p?.avatarPath || "", p?.avatarPath || "");
+          pair.appendChild(pImg);
+
+          if(entry.civLeaderAvatarPath){
+            const cImg = document.createElement("img");
+            cImg.className = "tCiv";
+            cImg.alt = `${safeText(entry.leaderName)} avatar`;
+            setImgSafe(cImg, entry.civLeaderAvatarPath, entry.civLeaderAvatarPath);
+            pair.appendChild(cImg);
+          } else {
+            const ph = document.createElement("div");
+            ph.className = "civPlaceholder";
+            pair.appendChild(ph);
+          }
+        } else {
+          const ph1 = document.createElement("div");
+          ph1.className = "civPlaceholder";
+          const ph2 = document.createElement("div");
+          ph2.className = "civPlaceholder";
+          pair.appendChild(ph1);
+          pair.appendChild(ph2);
+        }
+
+        wrap.appendChild(pair);
+        return wrap;
+      }
+    }
+
+    /* ============================================================
+       Smooth wheel-to-horizontal (fixes “fast wheel = slower” feel)
+       - No window-level wheel capture
+       - No scroll-snap fighting scrollbar/middle-mouse
+       - Uses inertial accumulator + RAF
+    ============================================================ */
+    function enableSmoothHorizontalWheel(scroller){
+      let target = scroller.scrollLeft;
+      let raf = 0;
+
+      const linePx = 20; // deltaMode line->px
+      function normalizeDelta(e){
+        const mode = e.deltaMode; // 0 pixel, 1 line, 2 page
+        const base = (mode === 1) ? e.deltaY * linePx : (mode === 2 ? e.deltaY * window.innerHeight : e.deltaY);
+        // acceleration curve: bigger deltas move proportionally more, not less
+        const abs = Math.abs(base);
+        const accel = 1 + Math.min(2.2, abs / 240); // 1..~3.2
+        // scale slightly by viewport width (4K tends to feel “small” otherwise)
+        const vwBoost = Math.max(1, window.innerWidth / 1400);
+        return base * accel * vwBoost;
+      }
+
+      function tick(){
+        raf = 0;
+        const cur = scroller.scrollLeft;
+        // ease towards target
+        const next = cur + (target - cur) * 0.22;
+        scroller.scrollLeft = next;
+
+        if(Math.abs(target - next) > 0.5){
+          raf = requestAnimationFrame(tick);
+        }
+      }
+
+      scroller.addEventListener("wheel", (e) => {
+        // If the user is intentionally horizontal scrolling (trackpad), allow deltaX too
+        const use = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? normalizeDelta(e) : e.deltaX;
+        // convert vertical wheel into horizontal movement
+        if(Math.abs(e.deltaY) > 0 && Math.abs(e.deltaY) >= Math.abs(e.deltaX)){
+          e.preventDefault();
+          target += use;
+        } else if(Math.abs(e.deltaX) > 0){
+          // let horizontal deltas work naturally but still smooth it
+          target += e.deltaX;
+        }
+
+        // clamp target
+        const max = scroller.scrollWidth - scroller.clientWidth;
+        target = Math.max(0, Math.min(max, target));
+
+        if(!raf) raf = requestAnimationFrame(tick);
+      }, { passive:false });
+
+      // keep target synced when user drags scrollbar / middle scroll
+      scroller.addEventListener("scroll", () => {
+        if(!raf) target = scroller.scrollLeft;
+      }, { passive:true });
+    }
+
+    async function main(){
+      const res = await fetch("data.json", { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      const players = data.players || [];
+      let matches = (data.matches || []).slice();
+
+      // Sort NEWEST -> OLDEST (as requested for tables page)
+      matches.sort((a,b) => parseUKDateKey(b.dateUK).localeCompare(parseUKDateKey(a.dateUK)));
+
+      const playersMap = byId(players);
+
+      // Build totals based on recent-5 system
+      const totals = buildTotalsRecent5(players, matches);
+
+      // Render pages
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+
+      const podium = renderPodium(totals, matches);
+      row.appendChild(podium);
+
+      const timeline = renderTimeline(matches, playersMap);
+      row.appendChild(timeline);
+
+      // Make timeline wide enough for many games
+      const css = getComputedStyle(document.documentElement);
+      const nodeW = parseFloat(css.getPropertyValue("--nodeW")) || 740;
+      const gap = parseFloat(css.getPropertyValue("--nodeGap")) || 140;
+      const pad = parseFloat(css.getPropertyValue("--timelinePad")) || 210;
+      const nodesCount = matches.length;
+
+      const nodesTotal = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+      const desired = pad + nodesTotal + pad;
+      timeline.style.width = Math.max(window.innerWidth, desired) + "px";
+
+      // Enable smooth wheel-to-horizontal on scroller ONLY
+      const scroller = document.getElementById("scroller");
+      enableSmoothHorizontalWheel(scroller);
+
+      // Parallax (map + parchment layers). IMPORTANT: no parallax on statues.
+      function updateParallax(){
+        const x = scroller.scrollLeft;
+        const layers = $$("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", updateParallax, { passive:true });
+      updateParallax();
+
+      window.addEventListener("resize", () => {
+        const nodesTotal2 = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+        const desired2 = pad + nodesTotal2 + pad;
+        timeline.style.width = Math.max(window.innerWidth, desired2) + "px";
+      });
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family:system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0;">ZIKA CIV LEAGUE</h1>
+          <p style="opacity:.9; line-height:1.5;">Could not load <code>data.json</code>. Make sure you're using <code>python -m http.server</code>.</p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

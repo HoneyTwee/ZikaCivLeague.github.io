@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIKA CIV LEAGUE</title>
+
+  <style>
+    /* ====== FONT (must exist exactly as named) ====== */
+    @font-face{
+      font-family: "ZikaTitle";
+      src: url("assets/fonts/OPTIColumna-Solid.otf") format("opentype");
+      font-display: swap;
+    }
+
+    :root{
+      --ink: rgba(255,255,255,0.92);
+      --inkDim: rgba(255,255,255,0.78);
+
+      --shadow: 0 22px 65px rgba(0,0,0,0.40);
+      --softShadow: 0 10px 30px rgba(0,0,0,0.22);
+
+      /* Timeline layout */
+      --nodeW: 560px;
+      --nodeGap: 120px;
+      --timelinePad: 170px;
+
+      /* Move match blocks UP a bit (table centers line) */
+      --tableLineY: 56%;
+
+      /* Podium avatars */
+      --avatar: 136px;
+      --avatarBig: 176px;
+
+      /* Timeline podium sizes */
+      --winAvatar: 120px;
+      --winCiv: 120px;
+      --placeAvatar: 92px;
+      --placeCiv: 92px;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#05060a;
+      color:var(--ink);
+    }
+
+    /* ====== HORIZONTAL SCROLLER ====== */
+    #scroller{
+      height:100vh;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-behavior:smooth;
+      -webkit-overflow-scrolling:touch;
+      outline:none;
+    }
+    #row{
+      display:flex;
+      height:100%;
+      width:max-content;
+    }
+
+    /* ====== PODIUM PANEL ====== */
+    .podiumPanel{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      flex:0 0 100vw;
+      overflow:hidden;
+    }
+    .bgMap{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background:
+        radial-gradient(1200px 800px at 25% 20%, rgba(130,170,255,0.22), transparent 60%),
+        radial-gradient(900px 600px at 70% 60%, rgba(255,255,255,0.10), transparent 65%),
+        url("assets/backgrounds/map.png");
+      background-size:cover;
+      background-position:center;
+      filter:saturate(1.05) contrast(1.05);
+      transform: translate3d(0,0,0);
+    }
+    .mapTint{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background: rgba(5,10,18,0.22);
+    }
+
+    .podiumContent{
+      position:relative;
+      z-index:2;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding: 64px 48px 40px;
+      gap: 26px;
+      text-align:center;
+    }
+
+    .leagueTitle{
+      margin:0;
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      font-size: 64px;
+      letter-spacing: 1.2px;
+      color: rgba(255,255,255,0.94);
+      text-shadow: 0 22px 70px rgba(0,0,0,0.45);
+    }
+
+    /* League standings layout */
+    .podiumGrid{
+      width:min(1100px, 95vw);
+      display:grid;
+      grid-template-rows: auto auto auto;
+      gap: 30px;
+      margin-top: 6px;
+      align-items:center;
+      justify-items:center;
+    }
+    .podiumRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .podiumRow.top{ gap: 0; }
+    .podiumRow.mid{ gap: 160px; }
+    .podiumRow.low{ gap: 160px; }
+
+    .playerFloat{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 16px;
+      filter: drop-shadow(var(--softShadow));
+    }
+
+    .trophyStack{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:flex-end;
+      min-width: 110px;
+    }
+    .trophyLine{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 20px;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      white-space:nowrap;
+    }
+    .trophyIcon{
+      font-size: 30px;
+      width: 34px;
+      text-align:center;
+    }
+
+    .avatarWrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 12px;
+    }
+    .rankPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.92);
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      backdrop-filter: blur(10px);
+    }
+
+    .avatar{
+      width: var(--avatar);
+      height: var(--avatar);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+    }
+    .avatar.big{
+      width: var(--avatarBig);
+      height: var(--avatarBig);
+      border-width: 2px;
+      box-shadow: 0 26px 80px rgba(0,0,0,0.40);
+    }
+
+    .pName{
+      margin:0;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+      color: rgba(255,255,255,0.94);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+    .pMini{
+      margin:0;
+      font-size: 13px;
+      color: rgba(255,255,255,0.78);
+      opacity:0.95;
+      line-height: 1.25;
+    }
+
+    /* Bottom text summary */
+    .bottomStats{
+      margin-top: 18px;
+      width:min(1100px, 95vw);
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,0.82);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+    .statsLine{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 18px;
+      justify-content:center;
+      font-size: 13px;
+      opacity:0.98;
+    }
+    .statsLine strong{ color: rgba(255,255,255,0.94); }
+
+    .scrollHint{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index:3;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+
+    /* Bottom-left small penalty note */
+    .penaltyNote{
+      position:absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index:3;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+
+    /* ====== TIMELINE PANEL ====== */
+    .timelinePanel{
+      position:relative;
+      height:100vh;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+
+    .bgParchment{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background: url("assets/backgrounds/parchment.png");
+      background-size: cover;
+      background-position: left center;
+      filter:saturate(1.02) contrast(1.02);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgLines{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      opacity:0.11;
+      mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 44px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 60px);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgCharacters{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      opacity:0.9;
+      background-image:none; /* later */
+      background-repeat:repeat-x;
+      background-size:auto 170px;
+      background-position:left bottom;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    .timelineContent{
+      position:relative;
+      z-index:5;
+      height:100%;
+      padding: 30px var(--timelinePad);
+      display:flex;
+      align-items:stretch;
+    }
+
+    .nodesRow{
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      gap: var(--nodeGap);
+      height:100%;
+      padding-right: var(--timelinePad);
+    }
+
+    /* Dotted line goes table-to-table (through table center) */
+    .timelineLine{
+      position:absolute;
+      left: var(--timelinePad);
+      right: var(--timelinePad);
+      top: var(--tableLineY);
+      height: 2px;
+      border-top: 2px dotted rgba(70,45,20,0.45);
+      z-index:4;
+      pointer-events:none;
+      transform: translateY(-50%);
+    }
+
+    .matchNode{
+      width: var(--nodeW);
+      height: 100%;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Small dot that sits behind the table centre */
+    .nodeDot{
+      position:absolute;
+      top: var(--tableLineY);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.26);
+      border: 2px solid rgba(70,45,20,0.38);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+      z-index:3;
+      pointer-events:none;
+    }
+
+    /* Floating modern table (not solid white) */
+    .matchTableWrap{
+      position:absolute;
+      top: var(--tableLineY);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.36);
+      border: 1px solid rgba(160,120,60,0.28);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      color: rgba(35,22,10,0.92);
+      z-index:5;
+    }
+
+    .matchTitle{
+      padding: 12px 14px;
+      background: rgba(214,180,90,0.16);
+      border-bottom: 1px solid rgba(160,120,60,0.18);
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      letter-spacing: 0.7px;
+      font-size: 16px;
+      color: rgba(45,28,12,0.92);
+      text-align:center;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th{
+      text-align:left;
+      padding: 10px 12px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity:0.88;
+      border-bottom: 1px solid rgba(160,120,60,0.14);
+    }
+    tbody td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(160,120,60,0.10);
+      vertical-align:middle;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    .tdPoints{ font-weight: 900; width: 92px; }
+    .tdPlayer{ font-weight: 900; width: 160px; white-space:nowrap; }
+    .tdScore{ width: 92px; font-variant-numeric: tabular-nums; }
+    .tdCiv{ opacity: 0.92; }
+
+    /* === NEW: Podium layout under each table: big #1, then #2/#3 smaller side-by-side === */
+    .nodePodium{
+      position:absolute;
+      top: calc(var(--tableLineY) + 225px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 34px;
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .winnerRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 20px;
+    }
+
+    .secondThirdRow{
+      width: 92%;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      align-items:center;
+      justify-items:center;
+    }
+
+    .placeBlock{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 16px;
+      filter: drop-shadow(0 14px 26px rgba(0,0,0,0.18));
+    }
+
+    .placeIcon{
+      width: 46px;
+      display:flex;
+      justify-content:center;
+      font-size: 30px;
+    }
+
+    .pAvatar{
+      width: var(--placeAvatar);
+      height: var(--placeAvatar);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.18);
+    }
+    .pCiv{
+      width: var(--placeCiv);
+      height: var(--placeCiv);
+      border-radius: 18px;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.16);
+      background: rgba(0,0,0,0.05);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.14);
+    }
+
+    .winnerRow .pAvatar{
+      width: var(--winAvatar);
+      height: var(--winAvatar);
+      box-shadow: 0 24px 52px rgba(0,0,0,0.22);
+    }
+    .winnerRow .pCiv{
+      width: var(--winCiv);
+      height: var(--winCiv);
+      box-shadow: 0 24px 52px rgba(0,0,0,0.18);
+    }
+    .winnerRow .placeIcon{ font-size: 34px; }
+
+    .civPlaceholder{
+      width: var(--placeCiv);
+      height: var(--placeCiv);
+      border-radius: 18px;
+      border: 1px dashed rgba(60,40,20,0.45);
+      background: rgba(255,255,255,0.18);
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      color: rgba(60,40,20,0.65);
+      font-size: 18px;
+    }
+    .winnerRow .civPlaceholder{
+      width: var(--winCiv);
+      height: var(--winCiv);
+      font-size: 20px;
+    }
+
+    @media (max-width: 980px){
+      .leagueTitle{ font-size: 46px; }
+      .podiumRow.mid, .podiumRow.low{ gap: 90px; }
+      :root{
+        --nodeW: 500px;
+        --nodeGap: 95px;
+        --timelinePad: 120px;
+        --tableLineY: 54%;
+        --winAvatar: 104px;
+        --winCiv: 104px;
+        --placeAvatar: 86px;
+        --placeCiv: 86px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroller" tabindex="0" aria-label="Zika Civ League horizontal scroller">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    // ===== League standings rating settings =====
+    const MISSED_GAME_PENALTY_AMOUNT = 0.25;
+
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+    function safeText(s){ return (s ?? "").toString(); }
+
+    function parseUKDateKey(dateUK){
+      const [dd, mm, yyyy] = safeText(dateUK).split("/");
+      return `${yyyy}${mm}${dd}`;
+    }
+
+    function byId(list){
+      const m = new Map();
+      for(const x of list) m.set(x.id, x);
+      return m;
+    }
+
+    // Winner forced to place 1; others by score desc
+    function computePlacements(match){
+      const entries = [...match.entries];
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+
+      others.sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if(winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for(let i=0;i<others.length;i++){
+        ordered.push({ ...others[i], place: i+2 });
+      }
+
+      const n = ordered.length;
+      for(const o of ordered){
+        o.points = (n - o.place + 1);
+      }
+      return ordered;
+    }
+
+    function victoryTypeBreakdown(matches){
+      const counts = new Map();
+      for(const m of matches){
+        const vt = safeText(m.victoryType);
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([k,v]) => ({ victoryType:k, count:v, pct:v/total }));
+      rows.sort((a,b) => b.count - a.count);
+      return rows;
+    }
+
+    function pct(x){ return `${Math.round(x*100)}%`; }
+
+    function buildTotals(players, matches){
+      const totals = new Map();
+      for(const p of players){
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          games: 0,
+          totalPoints: 0,
+          wins: 0,
+          medals: { gold:0, silver:0, bronze:0 },
+          avgPoints: 0,
+          rating: 0,
+          multiplier: 1
+        });
+      }
+
+      for(const match of matches){
+        const ordered = computePlacements(match);
+        for(const o of ordered){
+          const t = totals.get(o.playerId);
+          if(!t) continue;
+          t.games += 1;
+          t.totalPoints += (o.points ?? 0);
+          if(o.place === 1) t.wins += 1;
+          if(o.place === 1) t.medals.gold += 1;
+          if(o.place === 2) t.medals.silver += 1;
+          if(o.place === 3) t.medals.bronze += 1;
+        }
+      }
+
+      const totalGames = matches.length || 0;
+
+      const rows = [...totals.values()].map(t => {
+        const avgPoints = t.games ? (t.totalPoints / t.games) : 0;
+        const playedFrac = totalGames ? (t.games / totalGames) : 0;
+        const missedFrac = 1 - playedFrac;
+        const penalty = missedFrac * MISSED_GAME_PENALTY_AMOUNT;
+        const multiplier = 1 - penalty;
+        const rating = avgPoints * multiplier;
+        return { ...t, avgPoints, rating, multiplier };
+      });
+
+      rows.sort((a,b) => b.rating - a.rating);
+      return rows;
+    }
+
+    function renderPodium(totals, matches){
+      const panel = document.createElement("section");
+      panel.className = "podiumPanel";
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "bgMap" }));
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "mapTint" }));
+
+      const content = document.createElement("div");
+      content.className = "podiumContent";
+      panel.appendChild(content);
+
+      const title = document.createElement("h1");
+      title.className = "leagueTitle";
+      title.textContent = "ZIKA CIV LEAGUE";
+      content.appendChild(title);
+
+      // (Removed: "2 games logged • scroll right..." as requested)
+
+      const grid = document.createElement("div");
+      grid.className = "podiumGrid";
+      content.appendChild(grid);
+
+      const top5 = totals.slice(0, 5);
+
+      const rowTop = document.createElement("div");
+      rowTop.className = "podiumRow top";
+      grid.appendChild(rowTop);
+
+      const rowMid = document.createElement("div");
+      rowMid.className = "podiumRow mid";
+      grid.appendChild(rowMid);
+
+      const rowLow = document.createElement("div");
+      rowLow.className = "podiumRow low";
+      grid.appendChild(rowLow);
+
+      function trophyLine(icon, count){
+        const line = document.createElement("div");
+        line.className = "trophyLine";
+        const i = document.createElement("div");
+        i.className = "trophyIcon";
+        i.textContent = icon;
+        const c = document.createElement("div");
+        c.textContent = `×${count}`;
+        line.appendChild(i);
+        line.appendChild(c);
+        return line;
+      }
+
+      function playerFloat(t, rank){
+        const wrap = document.createElement("div");
+        wrap.className = "playerFloat";
+
+        const trophies = document.createElement("div");
+        trophies.className = "trophyStack";
+        trophies.appendChild(trophyLine("🏆", t.medals.gold));
+        trophies.appendChild(trophyLine("🥈", t.medals.silver));
+        trophies.appendChild(trophyLine("🥉", t.medals.bronze));
+        wrap.appendChild(trophies);
+
+        const aWrap = document.createElement("div");
+        aWrap.className = "avatarWrap";
+
+        const rankPill = document.createElement("div");
+        rankPill.className = "rankPill";
+        rankPill.textContent = `#${rank}`;
+        aWrap.appendChild(rankPill);
+
+        const img = document.createElement("img");
+        img.className = "avatar" + (rank === 1 ? " big" : "");
+        img.src = t.avatarPath;
+        img.alt = `${t.displayName} avatar`;
+        img.onerror = () => { img.style.display = "none"; };
+        aWrap.appendChild(img);
+
+        const name = document.createElement("p");
+        name.className = "pName";
+        name.textContent = t.displayName;
+        aWrap.appendChild(name);
+
+        // (Removed multiplier display "×1.000 played")
+        const winRate = t.games ? (t.wins / t.games) : 0;
+        const mini = document.createElement("p");
+        mini.className = "pMini";
+        mini.innerHTML =
+          `<strong>${t.rating.toFixed(2)}</strong> rating • ` +
+          `<strong>${t.avgPoints.toFixed(2)}</strong> avg pts • ` +
+          `<strong>${pct(winRate)}</strong> win`;
+        aWrap.appendChild(mini);
+
+        wrap.appendChild(aWrap);
+        return wrap;
+      }
+
+      if(top5[0]) rowTop.appendChild(playerFloat(top5[0], 1));
+      if(top5[1]) rowMid.appendChild(playerFloat(top5[1], 2));
+      if(top5[2]) rowMid.appendChild(playerFloat(top5[2], 3));
+      if(top5[3]) rowLow.appendChild(playerFloat(top5[3], 4));
+      if(top5[4]) rowLow.appendChild(playerFloat(top5[4], 5));
+
+      const breakdown = victoryTypeBreakdown(matches);
+      const topV = breakdown[0];
+
+      const bottom = document.createElement("div");
+      bottom.className = "bottomStats";
+      bottom.innerHTML = `
+        <div class="statsLine">
+          <span><strong>Most common victory:</strong> ${topV ? `${topV.victoryType} (${Math.round(topV.pct*100)}%)` : "—"}</span>
+        </div>
+        <div class="statsLine">
+          ${breakdown.slice(0,6).map(r => `<span><strong>${r.victoryType}:</strong> ${r.count} (${Math.round(r.pct*100)}%)</span>`).join("")}
+        </div>
+      `;
+      content.appendChild(bottom);
+
+      const hint = document.createElement("div");
+      hint.className = "scrollHint";
+      hint.textContent = "Scroll → to view match timeline";
+      panel.appendChild(hint);
+
+      // Bottom-left penalty note (fixed text as requested)
+      const note = document.createElement("div");
+      note.className = "penaltyNote";
+      note.textContent = "miss 50% of games, you get a 12.5% average score penalty";
+      panel.appendChild(note);
+
+      return panel;
+    }
+
+    function renderTimeline(matches, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "timelinePanel";
+
+      const bgA = document.createElement("div");
+      bgA.className = "bgParchment";
+      bgA.dataset.parallax = "0.10";
+
+      const bgB = document.createElement("div");
+      bgB.className = "bgLines";
+      bgB.dataset.parallax = "0.16";
+
+      const bgC = document.createElement("div");
+      bgC.className = "bgCharacters";
+      bgC.dataset.parallax = "0.24";
+
+      panel.appendChild(bgA);
+      panel.appendChild(bgB);
+      panel.appendChild(bgC);
+
+      const line = document.createElement("div");
+      line.className = "timelineLine";
+      panel.appendChild(line);
+
+      const content = document.createElement("div");
+      content.className = "timelineContent";
+      panel.appendChild(content);
+
+      const row = document.createElement("div");
+      row.className = "nodesRow";
+      content.appendChild(row);
+
+      for(const match of matches){
+        const node = document.createElement("div");
+        node.className = "matchNode";
+
+        const dot = document.createElement("div");
+        dot.className = "nodeDot";
+        node.appendChild(dot);
+
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "matchTableWrap";
+
+        const title = document.createElement("div");
+        title.className = "matchTitle";
+        title.textContent = `${match.dateUK} – ${match.victoryType} Victory`;
+        tableWrap.appendChild(title);
+
+        const ordered = computePlacements(match);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Points</th>
+              <th>Player</th>
+              <th>Score</th>
+              <th>Civ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = $("tbody", table);
+
+        for(const r of ordered){
+          const p = playersMap.get(r.playerId);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="tdPoints">${r.points} pts</td>
+            <td class="tdPlayer">${p ? p.displayName : r.playerId}</td>
+            <td class="tdScore"><strong>${r.score ?? 0}</strong></td>
+            <td class="tdCiv">${safeText(r.leaderName || "")}${r.leaderName ? " | " : ""}${safeText(r.civName || "")}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        tableWrap.appendChild(table);
+        node.appendChild(tableWrap);
+
+        // NEW: winner big, then #2 #3 side-by-side smaller
+        const nodePodium = document.createElement("div");
+        nodePodium.className = "nodePodium";
+
+        const top1 = ordered.find(x => x.place === 1);
+        const top2 = ordered.find(x => x.place === 2);
+        const top3 = ordered.find(x => x.place === 3);
+
+        const winnerRow = document.createElement("div");
+        winnerRow.className = "winnerRow";
+        winnerRow.appendChild(placeBlock("🏆", top1, true));
+        nodePodium.appendChild(winnerRow);
+
+        const secondThird = document.createElement("div");
+        secondThird.className = "secondThirdRow";
+        secondThird.appendChild(placeBlock("🥈", top2, false));
+        secondThird.appendChild(placeBlock("🥉", top3, false));
+        nodePodium.appendChild(secondThird);
+
+        node.appendChild(nodePodium);
+
+        row.appendChild(node);
+      }
+
+      return panel;
+
+      function placeBlock(iconChar, entry, isWinner){
+        const wrap = document.createElement("div");
+        wrap.className = "placeBlock";
+
+        const icon = document.createElement("div");
+        icon.className = "placeIcon";
+        icon.textContent = iconChar;
+        wrap.appendChild(icon);
+
+        if(entry){
+          const p = playersMap.get(entry.playerId);
+
+          const pImg = document.createElement("img");
+          pImg.className = "pAvatar";
+          pImg.src = p?.avatarPath || "";
+          pImg.alt = `${p?.displayName || entry.playerId} avatar`;
+          pImg.onerror = () => { pImg.style.display = "none"; };
+          wrap.appendChild(pImg);
+
+          if(entry.civLeaderAvatarPath){
+            const cImg = document.createElement("img");
+            cImg.className = "pCiv";
+            cImg.src = entry.civLeaderAvatarPath;
+            cImg.alt = `${safeText(entry.leaderName)} avatar`;
+            cImg.onerror = () => cImg.replaceWith(makeCivPlaceholder(isWinner));
+            wrap.appendChild(cImg);
+          } else {
+            wrap.appendChild(makeCivPlaceholder(isWinner));
+          }
+        } else {
+          wrap.appendChild(makeCivPlaceholder(isWinner));
+        }
+
+        // winner sizing is handled by CSS (.winnerRow .pAvatar/.pCiv)
+        return wrap;
+      }
+
+      function makeCivPlaceholder(isWinner){
+        const ph = document.createElement("div");
+        ph.className = "civPlaceholder";
+        ph.textContent = "?";
+        return ph;
+      }
+    }
+
+    async function main(){
+      const res = await fetch("data.json", { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      const players = data.players || [];
+      let matches = (data.matches || []).slice();
+
+      // Oldest -> newest (left to right)
+      matches.sort((a,b) => parseUKDateKey(a.dateUK).localeCompare(parseUKDateKey(b.dateUK)));
+
+      const playersMap = byId(players);
+      const totals = buildTotals(players, matches);
+
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+      row.appendChild(renderPodium(totals, matches));
+
+      const timeline = renderTimeline(matches, playersMap);
+      row.appendChild(timeline);
+
+      // Set timeline width based on number of matches
+      const css = getComputedStyle(document.documentElement);
+      const nodeW = parseInt(css.getPropertyValue("--nodeW")) || 560;
+      const gap = parseInt(css.getPropertyValue("--nodeGap")) || 120;
+      const pad = parseInt(css.getPropertyValue("--timelinePad")) || 170;
+      const nodesCount = matches.length;
+
+      const nodesTotal = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+      const desired = pad + nodesTotal + pad;
+      timeline.style.width = Math.max(window.innerWidth, desired) + "px";
+
+      // Wheel -> horizontal scroll (robust)
+      const scroller = document.getElementById("scroller");
+      scroller.focus();
+
+      function wheelToHorizontal(e){
+        if(e.shiftKey) return;
+        const absY = Math.abs(e.deltaY);
+        const absX = Math.abs(e.deltaX);
+        if(absY > absX){
+          e.preventDefault();
+          scroller.scrollLeft += e.deltaY;
+        }
+      }
+      scroller.addEventListener("wheel", wheelToHorizontal, { passive:false });
+      window.addEventListener("wheel", wheelToHorizontal, { passive:false });
+
+      // Parallax
+      function updateParallax(){
+        const x = scroller.scrollLeft;
+        const layers = $$("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", updateParallax);
+      updateParallax();
+
+      window.addEventListener("resize", () => {
+        const nodesTotal2 = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+        const desired2 = pad + nodesTotal2 + pad;
+        timeline.style.width = Math.max(window.innerWidth, desired2) + "px";
+      });
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family:system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0;">ZIKA CIV LEAGUE</h1>
+          <p style="opacity:.9; line-height:1.5;">Could not load <code>data.json</code>. Make sure you're using <code>python -m http.server</code>.</p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIKA CIV LEAGUE</title>
+
+  <style>
+    @font-face{
+      font-family: "ZikaTitle";
+      src: url("assets/fonts/OPTIColumna-Solid.otf") format("opentype");
+      font-display: swap;
+    }
+
+    :root{
+      --titleGold: #d5ac56;
+
+      /* background URLs (set by JS with cache-bust) */
+      --mapUrl: url("assets/backgrounds/map.png");
+      --parchmentUrl: url("assets/backgrounds/parchment.png");
+
+      /* --- overall scaling --- */
+      --u: min(1.0vmin, 1.0vh);
+
+      /* --- leaderboard sizes --- */
+      --trophyIcon: clamp(16px, 1.9vmin, 24px);
+      --trophyNum:  clamp(14px, 1.7vmin, 20px);
+
+      /* Make main avatars bigger (you liked the new layout, keep it strong) */
+      --p1: clamp(130px, 18vmin, 250px);
+      --p2: clamp(110px, 15vmin, 200px);
+      --p3: clamp(110px, 15vmin, 200px);
+      --p4: clamp(92px,  12.5vmin, 170px);
+      --p5: clamp(92px,  12.5vmin, 170px);
+
+      /* recent wins icon scales with player avatar */
+      --r1: calc(var(--p1) * 0.20);
+      --r2: calc(var(--p2) * 0.20);
+      --r3: calc(var(--p3) * 0.20);
+      --r4: calc(var(--p4) * 0.20);
+      --r5: calc(var(--p5) * 0.20);
+
+      /* --- parchment / timeline sizing --- */
+      --nodeW: clamp(520px, 46vw, 760px);
+      --nodeGap: clamp(90px, 8vw, 140px);
+      --timelinePad: clamp(110px, 10vw, 180px);
+
+      /* “centre line” of the tech-tree/timeline (table centres sit on this) */
+      --tableLineY: 26vh;
+
+      /* Under-table podium block position (move UP so 3rd place fits) */
+      --podiumOffset: 14vh;
+      --podiumTop: calc(var(--tableLineY) + var(--podiumOffset));
+
+      /* Under-table avatar sizes */
+      --m1: clamp(96px, 12.5vmin, 170px);
+      --m2: clamp(78px, 10.3vmin, 135px);
+      --m3: clamp(70px, 9.3vmin, 122px);
+
+      /* Player podium avatars +15%, civ stays same size */
+      --mp1: calc(var(--m1) * 1.15);
+      --mp2: calc(var(--m2) * 1.15);
+      --mp3: calc(var(--m3) * 1.15);
+
+      --mGapRow: clamp(16px, 2.0vmin, 26px);
+      --mGapPair: clamp(22px, 2.5vmin, 34px); /* gap between player and civ */
+      --podiumCol1: 56px; /* trophy column width */
+
+      /* unified 3-row alignment height for trophies + stats */
+      --threeRowH: clamp(22px, 2.35vmin, 30px);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#05060a;
+    }
+
+    /* ===== horizontal scroller ===== */
+    #scroller{
+      height:100vh;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-behavior:auto;
+      -webkit-overflow-scrolling:touch;
+      outline:none;
+      background:#05060a;
+    }
+    #row{
+      display:flex;
+      height:100%;
+      width:max-content;
+    }
+
+    /* ===== podium page ===== */
+    .podiumPanel{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      flex:0 0 100vw;
+      overflow:hidden;
+    }
+
+    .bgMap{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background:
+        radial-gradient(1200px 800px at 25% 20%, rgba(130,170,255,0.20), transparent 60%),
+        radial-gradient(900px 600px at 70% 60%, rgba(255,255,255,0.08), transparent 65%),
+        var(--mapUrl);
+      background-repeat: repeat;
+      background-size: auto;
+      background-position: center;
+      filter:saturate(1.03) contrast(1.05);
+      transform: translate3d(0,0,0);
+    }
+    .mapTint{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background: rgba(5,10,18,0.22);
+    }
+
+    /* statues (shrink ~30%, push to edges) */
+    .statue{
+      position:absolute;
+      bottom:-10vh;
+      width: min(32vw, 650px);
+      max-width: 650px;
+      z-index:2;
+      opacity:0.95;
+      filter: drop-shadow(0 24px 60px rgba(0,0,0,0.55));
+      pointer-events:none;
+      transform: translate3d(0,0,0);
+    }
+    .statue.left{
+      left:-8vw;
+    }
+    .statue.right{
+      right:-10vw;
+      transform: translate3d(0,0,0);
+    }
+
+    .podiumContent{
+      position:relative;
+      z-index:4;
+      height:100%;
+      width:100%;
+    }
+
+    .leagueTitle{
+      position:absolute;
+      top: 4.2vh;
+      left: 50%;
+      transform: translateX(-50%);
+      margin:0;
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      font-size: clamp(42px, 5.2vmin, 78px);
+      letter-spacing: 1.2px;
+      color: var(--titleGold);
+      text-shadow: 0 20px 70px rgba(0,0,0,0.45);
+      text-align:center;
+      z-index:5;
+      white-space:nowrap;
+    }
+
+    /* bottom stats */
+    .victoryRow{
+      position:absolute;
+      bottom: 2.8vh; /* lower to create room */
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      gap: clamp(14px, 2.2vmin, 26px);
+      align-items:center;
+      justify-content:center;
+      font-size: clamp(12px, 1.55vmin, 14px);
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 16px 40px rgba(0,0,0,0.40);
+      z-index:6;
+      white-space:nowrap;
+    }
+    .victoryRow strong{ color: rgba(255,255,255,0.95); }
+
+    .penaltyNote{
+      position:absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index:7;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+    .scrollHint{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index:7;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+
+    /* Slot: trophies | avatar | stats — all aligned by rows */
+    .slot{
+      position:absolute;
+      transform: translate(-50%, -50%);
+      display:grid;
+      grid-template-columns: auto auto auto;
+      column-gap: clamp(14px, 1.8vmin, 20px);
+      align-items:center;
+      z-index:6;
+    }
+
+    /* Trophy block (3 rows aligned) */
+    .trophies{
+      display:grid;
+      grid-template-rows: repeat(3, var(--threeRowH));
+      row-gap: 0px;
+      align-items:center;
+      justify-items:end;
+      min-width: clamp(80px, 9vmin, 120px);
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      user-select:none;
+    }
+
+    .tLine{
+      display:grid;
+      grid-template-columns: 34px auto;
+      align-items:center;
+      column-gap: 10px;
+      font-weight: 900;
+      font-size: var(--trophyNum);
+      line-height:1;
+      height: var(--threeRowH);
+    }
+    .tLine .num{
+      text-align:right;
+      opacity: 0.95;
+    }
+
+    /* Trophy stack: main left, trailing to right */
+    .tStack{
+      position:relative;
+      width: calc(var(--trophyIcon) + 9 * 10px);
+      height: var(--trophyIcon);
+    }
+    .tStack .t{
+      position:absolute;
+      top:0;
+      left:0;
+      font-size: var(--trophyIcon);
+      line-height:1;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25));
+    }
+    .tStack .t.ghost{
+      opacity: 0.38;
+      transform: translateX(calc(var(--i) * 10px));
+    }
+    .tStack .t.main{
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* avatar itself (NO border, no background box) */
+    .pAvatar{
+      display:block;
+      object-fit:contain;
+      filter: drop-shadow(0 18px 38px rgba(0,0,0,0.40));
+    }
+
+    /* stats on right of avatar (3 rows aligned to trophies) */
+    .pStats{
+      display:grid;
+      grid-template-rows: repeat(3, var(--threeRowH));
+      align-items:center;
+      row-gap: 0px;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 16px 40px rgba(0,0,0,0.40);
+      font-size: clamp(12px, 1.45vmin, 14px);
+      line-height: 1.15;
+      min-width: clamp(160px, 16vmin, 220px);
+      user-select:none;
+    }
+    .pStats .k{ opacity:0.92; }
+
+    /* recent wins box UNDER the avatar (centered reliably) */
+    .recentBox{
+      position:absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: calc(50% + 0px);
+      display:flex;
+      justify-content:center;
+      z-index:6;
+      pointer-events:none;
+    }
+    .recentInner{
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+      padding: 10px 12px;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+      width: fit-content;
+      min-height: 48px;
+    }
+    .recentInner img{
+      display:block;
+      object-fit:contain;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25));
+    }
+
+    /* ===== timeline page ===== */
+    .timelinePanel{
+      position:relative;
+      height:100vh;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+
+    .bgParchment{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background-image: var(--parchmentUrl);
+      background-repeat: repeat;
+      background-size: auto;
+      background-position: left top;
+      transform: translate3d(0,0,0);
+    }
+    .bgLines{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      opacity:0.10;
+      mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 44px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 60px);
+      transform: translate3d(0,0,0);
+    }
+    .timelineLine{
+      position:absolute;
+      left: var(--timelinePad);
+      right: var(--timelinePad);
+      top: var(--tableLineY);
+      height: 2px;
+      border-top: 2px dotted rgba(70,45,20,0.45);
+      z-index:2;
+      pointer-events:none;
+      transform: translateY(-50%);
+    }
+
+    .timelineContent{
+      position:relative;
+      z-index:5;
+      height:100%;
+      padding: 18px var(--timelinePad);
+      display:flex;
+      align-items:stretch;
+    }
+
+    .nodesRow{
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      gap: var(--nodeGap);
+      height:100%;
+      padding-right: var(--timelinePad);
+    }
+
+    .matchNode{
+      width: var(--nodeW);
+      height: 100%;
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+
+    .matchTableWrap{
+      position:absolute;
+      top: var(--tableLineY);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.34);
+      border: 1px solid rgba(160,120,60,0.24);
+      box-shadow: 0 22px 65px rgba(0,0,0,0.30);
+      backdrop-filter: blur(10px);
+      overflow: visible;
+      color: rgba(35,22,10,0.92);
+      z-index:6;
+    }
+
+    .tableTop{
+      position:relative;
+      padding-top: 18px;
+      border-radius: 18px;
+      overflow:hidden;
+    }
+
+    .pill{
+      position:absolute;
+      top: -14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid rgba(160,120,60,0.28);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.15);
+      color: rgba(45,28,12,0.92);
+      white-space:nowrap;
+      z-index:10;
+    }
+    .pill.left{ left: 14px; }
+    .pill.right{ right: 14px; }
+
+    /* Fix title bar: full width darker row */
+    .matchTitle{
+      padding: 12px 14px 10px;
+      background: rgba(214,180,90,0.30);
+      border-bottom: 1px solid rgba(160,120,60,0.18);
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      letter-spacing: 0.7px;
+      font-size: 16px;
+      color: rgba(45,28,12,0.92);
+      text-align:center;
+      text-transform: uppercase;
+      width:100%;
+      display:block;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      table-layout: fixed;
+      background: rgba(255,255,255,0.08);
+    }
+    thead th{
+      text-align:left;
+      padding: 10px 12px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity:0.88;
+      border-bottom: 1px solid rgba(160,120,60,0.14);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(160,120,60,0.10);
+      vertical-align:middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    .thPoints{ width: 80px; }
+    .thPlayer{ width: 110px; }
+    .thScore{  width: 78px; }
+    .thLeader{ width: 170px; }
+    .thCiv{    width: 160px; }
+
+    /* Under-table podium: trophy | player | civ (centers line up) */
+    .nodePodium{
+      position:absolute;
+      top: var(--podiumTop);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: var(--mGapRow);
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .placeRow{
+      display:grid;
+      grid-template-columns: var(--podiumCol1) auto auto;
+      align-items:center;
+      column-gap: var(--mGapPair);
+      justify-items:center;
+    }
+
+    .placeIco{
+      width: var(--podiumCol1);
+      display:flex;
+      justify-content:center;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
+    }
+
+    /* trophy stack used on parchment too */
+    .placeIco .tStack{
+      transform: scale(1.05);
+    }
+
+    .mPlayer, .mCiv{
+      display:block;
+      object-fit:contain;
+      filter: drop-shadow(0 18px 34px rgba(0,0,0,0.16));
+    }
+
+    /* Player bigger than civ on parchment */
+    .m1 .mPlayer{ width: var(--mp1); height: var(--mp1); }
+    .m1 .mCiv{    width: var(--m1);  height: var(--m1);  }
+
+    .m2 .mPlayer{ width: var(--mp2); height: var(--mp2); }
+    .m2 .mCiv{    width: var(--m2);  height: var(--m2);  }
+
+    .m3 .mPlayer{ width: var(--mp3); height: var(--mp3); }
+    .m3 .mCiv{    width: var(--m3);  height: var(--m3);  }
+
+    @media (max-height: 820px){
+      :root{
+        --tableLineY: 24vh;
+        --podiumOffset: 13vh;
+        --m1: clamp(86px, 11.5vmin, 150px);
+        --m2: clamp(72px, 9.8vmin, 125px);
+        --m3: clamp(64px, 8.9vmin, 112px);
+
+        --mp1: calc(var(--m1) * 1.15);
+        --mp2: calc(var(--m2) * 1.15);
+        --mp3: calc(var(--m3) * 1.15);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroller" tabindex="0" aria-label="Zika Civ League horizontal scroller">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+    const safeText = (s) => (s ?? "").toString();
+
+    function parseUKDateKey(dateUK){
+      const [dd, mm, yyyy] = safeText(dateUK).split("/");
+      return `${yyyy}${mm}${dd}`;
+    }
+    function byId(list){
+      const m = new Map();
+      for(const x of list) m.set(x.id, x);
+      return m;
+    }
+
+    function leaderAvatarPath(leaderName){
+      if(!leaderName) return "";
+      const file = encodeURIComponent(leaderName) + ".png";
+      return "assets/civ_leader_avatars/" + file;
+    }
+
+    function avatarVariant(player, medal){
+      if(!player?.avatarPath) return "";
+      if(!medal) return player.avatarPath;
+
+      const base = player.avatarPath.replace(/\\/g, "/");
+      const lastSlash = base.lastIndexOf("/");
+      const dir = lastSlash >= 0 ? base.slice(0, lastSlash + 1) : "";
+      return `${dir}${player.id}_${medal}.png`;
+    }
+
+    function computePlacements(match){
+      const entries = [...match.entries];
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+
+      others.sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if(winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for(let i=0;i<others.length;i++){
+        ordered.push({ ...others[i], place: i+2 });
+      }
+
+      const n = ordered.length;
+      for(const o of ordered){
+        o.points = (n - o.place + 1);
+      }
+      return ordered;
+    }
+
+    function victoryTypeBreakdown(matches){
+      const counts = new Map();
+      for(const m of matches){
+        const vt = safeText(m.victoryType);
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([k,v]) => ({ victoryType:k, count:v, pct:v/total }));
+      rows.sort((a,b) => b.count - a.count);
+      return rows;
+    }
+    function pct(x){ return `${Math.round(x*100)}%`; }
+
+    // NEW: leaderboard based on recent 5 games per player (no missing-game penalty)
+    function buildTotalsRecent(players, matchesNewestFirst){
+      const totals = new Map();
+      for(const p of players){
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          games: 0,
+          totalPoints: 0,
+          wins: 0,
+          medals: { gold:0, silver:0, bronze:0 },
+          avgAllTime: 0,
+          avgRecent: 0
+        });
+      }
+
+      // All-time medals + all-time points
+      for(const match of matchesNewestFirst){
+        const ordered = computePlacements(match);
+        for(const o of ordered){
+          const t = totals.get(o.playerId);
+          if(!t) continue;
+          t.games += 1;
+          t.totalPoints += (o.points ?? 0);
+          if(o.place === 1) t.wins += 1;
+          if(o.place === 1) t.medals.gold += 1;
+          if(o.place === 2) t.medals.silver += 1;
+          if(o.place === 3) t.medals.bronze += 1;
+        }
+      }
+
+      // Recent avg from last 5 matches the player participated in (newest->oldest)
+      for(const p of players){
+        const t = totals.get(p.id);
+        const recentPts = [];
+        for(const match of matchesNewestFirst){
+          const ordered = computePlacements(match);
+          const row = ordered.find(r => r.playerId === p.id);
+          if(row){
+            recentPts.push(row.points ?? 0);
+            if(recentPts.length >= 5) break;
+          }
+        }
+        t.avgRecent = recentPts.length ? (recentPts.reduce((a,b)=>a+b,0)/recentPts.length) : 0;
+        t.avgAllTime = t.games ? (t.totalPoints / t.games) : 0;
+      }
+
+      const rows = [...totals.values()];
+      rows.sort((a,b) => b.avgRecent - a.avgRecent);
+      return rows;
+    }
+
+    function buildRecentWinsByPlayer(matchesNewestFirst){
+      const map = new Map();
+      for(const m of matchesNewestFirst){
+        const winnerId = m.winnerPlayerId;
+        const winnerEntry = (m.entries || []).find(e => e.playerId === winnerId);
+        if(!winnerId || !winnerEntry) continue;
+
+        const leaderName = safeText(winnerEntry.leaderName || "");
+        if(!leaderName) continue;
+
+        const arr = map.get(winnerId) || [];
+        arr.push({ leaderName, path: leaderAvatarPath(leaderName) });
+        map.set(winnerId, arr);
+      }
+      return map;
+    }
+
+    function trophyStackHTML(count){
+      const n = Math.max(0, Math.min(10, count|0));
+      if(n === 0){
+        return `<span class="tStack" aria-hidden="true"></span>`;
+      }
+      // main trophy + (n-1) ghosts trailing RIGHT
+      let ghosts = "";
+      for(let i=1;i<n;i++){
+        ghosts += `<span class="t ghost" style="--i:${i}">🏆</span>`;
+      }
+      return `
+        <span class="tStack" aria-label="${count} trophies">
+          <span class="t main">🏆</span>
+          ${ghosts}
+        </span>
+      `;
+    }
+
+    function renderPodium(totals, matchesNewestFirst, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "podiumPanel";
+
+      const bg = document.createElement("div");
+      bg.className = "bgMap";
+      bg.dataset.parallax = "0.10";
+      panel.appendChild(bg);
+
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "mapTint" }));
+
+      // statues: NO parallax
+      const qin = document.createElement("img");
+      qin.className = "statue left";
+      qin.src = "assets/artwork/qin_shi_huang_statue.png";
+      qin.alt = "Qin Shi Huang statue";
+      panel.appendChild(qin);
+
+      const gil = document.createElement("img");
+      gil.className = "statue right";
+      gil.src = "assets/artwork/gilgamesh_statue.png";
+      gil.alt = "Gilgamesh statue";
+      panel.appendChild(gil);
+
+      const content = document.createElement("div");
+      content.className = "podiumContent";
+      panel.appendChild(content);
+
+      const title = document.createElement("h1");
+      title.className = "leagueTitle";
+      title.textContent = "ZIKA CIV LEAGUE";
+      content.appendChild(title);
+
+      const breakdown = victoryTypeBreakdown(matchesNewestFirst);
+      const most = breakdown[0];
+      const vRow = document.createElement("div");
+      vRow.className = "victoryRow";
+      vRow.innerHTML = `
+        <span><strong>Most common victory:</strong> ${most ? `${most.victoryType} Victory (${Math.round(most.pct*100)}%)` : "—"}</span>
+        ${breakdown.slice(0,6).map(r => `<span><strong>${r.victoryType} Victory:</strong> ${r.count} (${Math.round(r.pct*100)}%)</span>`).join("")}
+      `;
+      content.appendChild(vRow);
+
+      // bottom left note (replaces penalty text)
+      const note = document.createElement("div");
+      note.className = "penaltyNote";
+      note.textContent = "Leaderboard is based off your recent 5 games";
+      panel.appendChild(note);
+
+      const hint = document.createElement("div");
+      hint.className = "scrollHint";
+      hint.textContent = "Scroll → to view match timeline";
+      panel.appendChild(hint);
+
+      // Move top three slightly UP
+      const layout = [
+        { rank:1, x:50, y:24 },
+        { rank:2, x:30, y:49 },
+        { rank:3, x:70, y:49 },
+        { rank:4, x:30, y:76 },
+        { rank:5, x:70, y:76 },
+      ];
+
+      const recentWins = buildRecentWinsByPlayer(matchesNewestFirst);
+
+      function standingMedal(rank){
+        if(rank === 1) return "gold";
+        if(rank === 2) return "silver";
+        if(rank === 3) return "bronze";
+        return null;
+      }
+      function avatarSizeFor(rank){
+        const css = getComputedStyle(document.documentElement);
+        if(rank===1) return css.getPropertyValue("--p1").trim();
+        if(rank===2) return css.getPropertyValue("--p2").trim();
+        if(rank===3) return css.getPropertyValue("--p3").trim();
+        if(rank===4) return css.getPropertyValue("--p4").trim();
+        return css.getPropertyValue("--p5").trim();
+      }
+      function recentIconSizeFor(rank){
+        if(rank===1) return "var(--r1)";
+        if(rank===2) return "var(--r2)";
+        if(rank===3) return "var(--r3)";
+        if(rank===4) return "var(--r4)";
+        return "var(--r5)";
+      }
+
+      for(const pos of layout){
+        const t = totals[pos.rank-1];
+        if(!t) continue;
+
+        const player = playersMap.get(t.playerId);
+        const medal = standingMedal(pos.rank);
+
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.style.left = pos.x + "vw";
+        slot.style.top  = pos.y + "vh";
+
+        // trophies (stack style, aligned)
+        const trophies = document.createElement("div");
+        trophies.className = "trophies";
+        trophies.innerHTML = `
+          <div class="tLine"><span class="num">${t.medals.gold}</span>${trophyStackHTML(t.medals.gold)}</div>
+          <div class="tLine"><span class="num">${t.medals.silver}</span>${trophyStackHTML(t.medals.silver)}</div>
+          <div class="tLine"><span class="num">${t.medals.bronze}</span>${trophyStackHTML(t.medals.bronze)}</div>
+        `;
+
+        // avatar
+        const img = document.createElement("img");
+        img.className = "pAvatar";
+        img.src = avatarVariant(player, medal);
+        img.alt = `${t.displayName} avatar`;
+        img.style.width = avatarSizeFor(pos.rank);
+        img.style.height = avatarSizeFor(pos.rank);
+        img.onerror = () => { img.src = player?.avatarPath || ""; };
+
+        // stats (aligned to trophy rows)
+        const winRate = t.games ? (t.wins / t.games) : 0;
+        const stats = document.createElement("div");
+        stats.className = "pStats";
+        stats.innerHTML = `
+          <div class="k">Recent Avg Pts ${t.avgRecent.toFixed(2)}</div>
+          <div class="k">All Time Avg Points ${t.avgAllTime.toFixed(2)}</div>
+          <div class="k">Win Rate ${pct(winRate)}</div>
+        `;
+
+        slot.appendChild(trophies);
+        slot.appendChild(img);
+        slot.appendChild(stats);
+
+        // recent wins under avatar (centered)
+        const recentBox = document.createElement("div");
+        recentBox.className = "recentBox";
+        recentBox.style.top = `calc(50% + (${avatarSizeFor(pos.rank)} / 2) + 14px)`;
+
+        const inner = document.createElement("div");
+        inner.className = "recentInner";
+
+        const wins = (recentWins.get(t.playerId) || []).slice(0,5);
+        for(let i=0;i<5;i++){
+          const w = wins[i];
+          const li = document.createElement("img");
+          li.style.width = recentIconSizeFor(pos.rank);
+          li.style.height = recentIconSizeFor(pos.rank);
+          if(w){
+            li.src = w.path;
+            li.alt = w.leaderName;
+            li.onerror = () => { li.style.opacity = "0.0"; };
+          }else{
+            li.style.opacity = "0";
+          }
+          inner.appendChild(li);
+        }
+        recentBox.appendChild(inner);
+        slot.appendChild(recentBox);
+
+        panel.appendChild(slot);
+      }
+
+      return panel;
+    }
+
+    function renderTimeline(matchesNewestFirst, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "timelinePanel";
+
+      const bgA = document.createElement("div");
+      bgA.className = "bgParchment";
+      bgA.dataset.parallax = "0.08";
+
+      const bgB = document.createElement("div");
+      bgB.className = "bgLines";
+      bgB.dataset.parallax = "0.14";
+
+      panel.appendChild(bgA);
+      panel.appendChild(bgB);
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "timelineLine" }));
+
+      const content = document.createElement("div");
+      content.className = "timelineContent";
+      panel.appendChild(content);
+
+      const row = document.createElement("div");
+      row.className = "nodesRow";
+      content.appendChild(row);
+
+      const total = matchesNewestFirst.length;
+
+      // Match #1 should be OLDEST, newest is Match #N
+      matchesNewestFirst.forEach((match, idx) => {
+        const matchNo = total - idx;
+
+        const node = document.createElement("div");
+        node.className = "matchNode";
+
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "matchTableWrap";
+
+        const ordered = computePlacements(match);
+        const winner = ordered.find(x => x.place === 1);
+        const winnerPlayer = winner ? playersMap.get(winner.playerId) : null;
+        const winnerName = winnerPlayer ? winnerPlayer.displayName : "Winner";
+        const vt = safeText(match.victoryType || "");
+
+        const top = document.createElement("div");
+        top.className = "tableTop";
+
+        const pillL = document.createElement("div");
+        pillL.className = "pill left";
+        pillL.textContent = `Match #${matchNo}`;
+
+        const pillR = document.createElement("div");
+        pillR.className = "pill right";
+        pillR.textContent = safeText(match.dateUK);
+
+        tableWrap.appendChild(pillL);
+        tableWrap.appendChild(pillR);
+
+        const title = document.createElement("div");
+        title.className = "matchTitle";
+        title.textContent = `${winnerName.toUpperCase()}'S ${vt.toUpperCase()} VICTORY`;
+        top.appendChild(title);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th class="thPoints">Points</th>
+              <th class="thPlayer">Player</th>
+              <th class="thScore">Score</th>
+              <th class="thLeader">Leader</th>
+              <th class="thCiv">Civ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = $("tbody", table);
+
+        for(const r of ordered){
+          const p = playersMap.get(r.playerId);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${r.points}</strong> pts</td>
+            <td><strong>${p ? p.displayName : r.playerId}</strong></td>
+            <td><strong>${r.score ?? 0}</strong></td>
+            <td>${safeText(r.leaderName || "")}</td>
+            <td>${safeText(r.civName || "")}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        top.appendChild(table);
+        tableWrap.appendChild(top);
+        node.appendChild(tableWrap);
+
+        // PODIUM under table (use trophy stack instead of medals)
+        const podium = document.createElement("div");
+        podium.className = "nodePodium";
+
+        const p1 = ordered.find(x => x.place === 1);
+        const p2 = ordered.find(x => x.place === 2);
+        const p3 = ordered.find(x => x.place === 3);
+
+        podium.appendChild(placeRow(p1, "gold", "m1", 1));
+        podium.appendChild(placeRow(p2, "silver", "m2", 2));
+        podium.appendChild(placeRow(p3, "bronze", "m3", 3));
+
+        node.appendChild(podium);
+        row.appendChild(node);
+      });
+
+      return panel;
+
+      function placeRow(entry, medal, sizeClass, placeNum){
+        const wrap = document.createElement("div");
+        wrap.className = `placeRow ${sizeClass}`;
+
+        const ico = document.createElement("div");
+        ico.className = "placeIco";
+        // always show trophy icon; stack count not meaningful here, so show 1
+        ico.innerHTML = trophyStackHTML(1);
+        wrap.appendChild(ico);
+
+        if(entry){
+          const p = playersMap.get(entry.playerId);
+
+          const pImg = document.createElement("img");
+          pImg.className = `mPlayer ${sizeClass}`;
+          pImg.src = avatarVariant(p, medal);
+          pImg.alt = `${p?.displayName || entry.playerId} avatar`;
+          pImg.onerror = () => { pImg.src = p?.avatarPath || ""; };
+          wrap.appendChild(pImg);
+
+          const cImg = document.createElement("img");
+          cImg.className = `mCiv ${sizeClass}`;
+          cImg.src = leaderAvatarPath(entry.leaderName || "");
+          cImg.alt = safeText(entry.leaderName || "");
+          cImg.onerror = () => { cImg.style.opacity = "0.0"; };
+          wrap.appendChild(cImg);
+        } else {
+          const ph1 = document.createElement("div");
+          ph1.style.width = "1px"; ph1.style.height = "1px"; ph1.style.opacity = "0";
+          const ph2 = ph1.cloneNode();
+          wrap.appendChild(ph1);
+          wrap.appendChild(ph2);
+        }
+
+        return wrap;
+      }
+    }
+
+    // Faster + consistent inertial horizontal scroll
+    function setupInertialWheel(scroller){
+      let target = scroller.scrollLeft;
+      let velocity = 0;
+      let raf = null;
+
+      function clampTarget(){
+        const max = scroller.scrollWidth - scroller.clientWidth;
+        if(target < 0) target = 0;
+        if(target > max) target = max;
+      }
+
+      function step(){
+        raf = null;
+
+        // integrate velocity into target
+        target += velocity;
+        clampTarget();
+
+        // ease current -> target
+        const cur = scroller.scrollLeft;
+        const diff = target - cur;
+        scroller.scrollLeft = cur + diff * 0.28;
+
+        // friction
+        velocity *= 0.86;
+        if(Math.abs(velocity) < 0.1) velocity = 0;
+
+        if(Math.abs(diff) > 0.5 || Math.abs(velocity) > 0.1){
+          raf = requestAnimationFrame(step);
+        }
+      }
+
+      function normDelta(e){
+        let d = (Math.abs(e.deltaY) > Math.abs(e.deltaX)) ? e.deltaY : e.deltaX;
+        if(e.deltaMode === 1) d *= 28;
+        if(e.deltaMode === 2) d *= window.innerHeight;
+        // Make it FAST (your request #1)
+        d *= 2.8;
+        const cap = 4200;
+        d = Math.max(-cap, Math.min(cap, d));
+        return d;
+      }
+
+      // If user drags scrollbar / middle-mouse scroll, don’t fight it
+      scroller.addEventListener("scroll", () => {
+        if(!raf){
+          target = scroller.scrollLeft;
+          velocity = 0;
+        }
+      }, { passive:true });
+
+      scroller.addEventListener("wheel", (e) => {
+        if(e.shiftKey) return;
+        e.preventDefault();
+        const d = normDelta(e);
+        velocity += d * 0.22;
+        target = scroller.scrollLeft + d;
+        clampTarget();
+        if(!raf) raf = requestAnimationFrame(step);
+      }, { passive:false });
+    }
+
+    function setupParallax(scroller){
+      function update(){
+        const x = scroller.scrollLeft;
+        const layers = $$("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", update);
+      update();
+    }
+
+    async function main(){
+      // cache-bust backgrounds (fix #2 "backgrounds not showing")
+      const cb = Date.now();
+      document.documentElement.style.setProperty("--mapUrl", `url("assets/backgrounds/map.png?cb=${cb}")`);
+      document.documentElement.style.setProperty("--parchmentUrl", `url("assets/backgrounds/parchment.png?cb=${cb}")`);
+
+      const res = await fetch("data.json", { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      const players = data.players || [];
+      let matches = (data.matches || []).slice();
+
+      // newest -> oldest
+      matches.sort((a,b) => parseUKDateKey(b.dateUK).localeCompare(parseUKDateKey(a.dateUK)));
+
+      const playersMap = byId(players);
+
+      // NEW standings method: recent 5 games
+      const totals = buildTotalsRecent(players, matches);
+
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+      row.appendChild(renderPodium(totals, matches, playersMap));
+
+      const timeline = renderTimeline(matches, playersMap);
+      row.appendChild(timeline);
+
+      // timeline width
+      const css = getComputedStyle(document.documentElement);
+      const nodeW = parseFloat(css.getPropertyValue("--nodeW")) || 650;
+      const gap = parseFloat(css.getPropertyValue("--nodeGap")) || 120;
+      const pad = parseFloat(css.getPropertyValue("--timelinePad")) || 170;
+      const nodesCount = matches.length;
+
+      const nodesTotal = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+      const desired = pad + nodesTotal + pad;
+      timeline.style.width = Math.max(window.innerWidth, desired) + "px";
+
+      const scroller = document.getElementById("scroller");
+      scroller.focus();
+
+      setupInertialWheel(scroller);
+      setupParallax(scroller);
+
+      window.addEventListener("resize", () => {
+        const css2 = getComputedStyle(document.documentElement);
+        const nodeW2 = parseFloat(css2.getPropertyValue("--nodeW")) || nodeW;
+        const gap2  = parseFloat(css2.getPropertyValue("--nodeGap")) || gap;
+        const pad2  = parseFloat(css2.getPropertyValue("--timelinePad")) || pad;
+        const nodesTotal2 = nodesCount * nodeW2 + Math.max(0, nodesCount - 1) * gap2;
+        const desired2 = pad2 + nodesTotal2 + pad2;
+        timeline.style.width = Math.max(window.innerWidth, desired2) + "px";
+      });
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family:system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0; color:${'#d5ac56'};">ZIKA CIV LEAGUE</h1>
+          <p style="opacity:.9; line-height:1.5;">Could not load <code>data.json</code>. Make sure you're using <code>python -m http.server</code>.</p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+{
+  "meta": {
+    "leagueName": "Civ League",
+    "dateFormat": "UK"
+  },
+  "players": [
+    { "id": "honey", "displayName": "Honey", "avatarPath": "assets/avatars/honey.png" },
+    { "id": "sam", "displayName": "Sam", "avatarPath": "assets/avatars/sam.png" },
+    { "id": "jack", "displayName": "Jack", "avatarPath": "assets/avatars/jack.png" },
+    { "id": "ben", "displayName": "Ben", "avatarPath": "assets/avatars/ben.png" },
+    { "id": "charlie", "displayName": "Charlie", "avatarPath": "assets/avatars/charlie.png" }
+  ],
+  "matches": [
+    {
+      "id": "2026-06-30-01",
+      "dateUK": "30/06/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "honey",
+      "notes": "Cycle 5/5",
+      "entries": [
+        { "playerId": "honey", "leaderName": "Nzinga Mbande", "civName": "Congo", "score": 1520, "civLeaderAvatarPath": "assets/civ_leader_avatars/nzinga_mbande.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1410, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Kristina", "civName": "Sweden", "score": 1295, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1210, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1140, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-06-23-01",
+      "dateUK": "23/06/2026",
+      "victoryType": "Domination",
+      "winnerPlayerId": "jack",
+      "notes": "Cycle 5/5",
+      "entries": [
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1705, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "honey", "leaderName": "Trajan", "civName": "Rome", "score": 1608, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "charlie", "leaderName": "Theodora", "civName": "Byzantine", "score": 1420, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "ben", "leaderName": "Pericles", "civName": "Greece", "score": 1260, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "sam", "leaderName": "Gorgo", "civName": "Greece", "score": 1185, "civLeaderAvatarPath": "assets/civ_leader_avatars/gorgo.png" }
+      ]
+    },
+    {
+      "id": "2026-06-16-01",
+      "dateUK": "16/06/2026",
+      "victoryType": "Science",
+      "winnerPlayerId": "charlie",
+      "notes": "Cycle 5/5",
+      "entries": [
+        { "playerId": "charlie", "leaderName": "Seondeok", "civName": "Korea", "score": 1680, "civLeaderAvatarPath": "assets/civ_leader_avatars/seondeok.png" },
+        { "playerId": "honey", "leaderName": "Sejong", "civName": "Korea", "score": 1602, "civLeaderAvatarPath": "assets/civ_leader_avatars/sejong.png" },
+        { "playerId": "jack", "leaderName": "Trajan", "civName": "Rome", "score": 1450, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1295, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1210, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-06-09-01",
+      "dateUK": "09/06/2026",
+      "victoryType": "Score",
+      "winnerPlayerId": "ben",
+      "notes": "Cycle 5/5",
+      "entries": [
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 980, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "honey", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 910, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 860, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Kristina", "civName": "Sweden", "score": 820, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 790, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-06-02-01",
+      "dateUK": "02/06/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "sam",
+      "notes": "Cycle 5/5",
+      "entries": [
+        { "playerId": "sam", "leaderName": "Kristina", "civName": "Sweden", "score": 1490, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "honey", "leaderName": "Theodora", "civName": "Byzantine", "score": 1415, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1340, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Cyrus", "civName": "Persia", "score": 1250, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "ben", "leaderName": "Trajan", "civName": "Rome", "score": 1185, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" }
+      ]
+    },
+
+    {
+      "id": "2026-05-26-01",
+      "dateUK": "26/05/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "honey",
+      "notes": "Cycle 4/5",
+      "entries": [
+        { "playerId": "honey", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1510, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1422, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Theodora", "civName": "Byzantine", "score": 1310, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1220, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1145, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-05-19-01",
+      "dateUK": "19/05/2026",
+      "victoryType": "Domination",
+      "winnerPlayerId": "jack",
+      "notes": "Cycle 4/5",
+      "entries": [
+        { "playerId": "jack", "leaderName": "Trajan", "civName": "Rome", "score": 1710, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "honey", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1620, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Gorgo", "civName": "Greece", "score": 1420, "civLeaderAvatarPath": "assets/civ_leader_avatars/gorgo.png" },
+        { "playerId": "ben", "leaderName": "Pericles", "civName": "Greece", "score": 1260, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "sam", "leaderName": "Cyrus", "civName": "Persia", "score": 1180, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" }
+      ]
+    },
+    {
+      "id": "2026-05-12-01",
+      "dateUK": "12/05/2026",
+      "victoryType": "Science",
+      "winnerPlayerId": "charlie",
+      "notes": "Cycle 4/5",
+      "entries": [
+        { "playerId": "charlie", "leaderName": "Sejong", "civName": "Korea", "score": 1670, "civLeaderAvatarPath": "assets/civ_leader_avatars/sejong.png" },
+        { "playerId": "honey", "leaderName": "Seondeok", "civName": "Korea", "score": 1600, "civLeaderAvatarPath": "assets/civ_leader_avatars/seondeok.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1450, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1290, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1215, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-05-05-01",
+      "dateUK": "05/05/2026",
+      "victoryType": "Score",
+      "winnerPlayerId": "ben",
+      "notes": "Cycle 4/5",
+      "entries": [
+        { "playerId": "ben", "leaderName": "Kristina", "civName": "Sweden", "score": 990, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "honey", "leaderName": "Nzinga Mbande", "civName": "Congo", "score": 920, "civLeaderAvatarPath": "assets/civ_leader_avatars/nzinga_mbande.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 870, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Theodora", "civName": "Byzantine", "score": 830, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 800, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-04-28-01",
+      "dateUK": "28/04/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "sam",
+      "notes": "Cycle 4/5",
+      "entries": [
+        { "playerId": "sam", "leaderName": "Pericles", "civName": "Greece", "score": 1482, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "honey", "leaderName": "Theodora", "civName": "Byzantine", "score": 1420, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1338, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Cyrus", "civName": "Persia", "score": 1250, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "ben", "leaderName": "Trajan", "civName": "Rome", "score": 1180, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" }
+      ]
+    },
+
+    {
+      "id": "2026-04-21-01",
+      "dateUK": "21/04/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "honey",
+      "notes": "Cycle 3/5",
+      "entries": [
+        { "playerId": "honey", "leaderName": "Theodora", "civName": "Byzantine", "score": 1501, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1414, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Kristina", "civName": "Sweden", "score": 1300, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1212, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1150, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-04-14-01",
+      "dateUK": "14/04/2026",
+      "victoryType": "Domination",
+      "winnerPlayerId": "jack",
+      "notes": "Cycle 3/5",
+      "entries": [
+        { "playerId": "jack", "leaderName": "Pericles", "civName": "Greece", "score": 1702, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "honey", "leaderName": "Trajan", "civName": "Rome", "score": 1611, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "charlie", "leaderName": "Gorgo", "civName": "Greece", "score": 1425, "civLeaderAvatarPath": "assets/civ_leader_avatars/gorgo.png" },
+        { "playerId": "ben", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1265, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "sam", "leaderName": "Cyrus", "civName": "Persia", "score": 1188, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" }
+      ]
+    },
+    {
+      "id": "2026-04-07-01",
+      "dateUK": "07/04/2026",
+      "victoryType": "Science",
+      "winnerPlayerId": "charlie",
+      "notes": "Cycle 3/5",
+      "entries": [
+        { "playerId": "charlie", "leaderName": "Seondeok", "civName": "Korea", "score": 1662, "civLeaderAvatarPath": "assets/civ_leader_avatars/seondeok.png" },
+        { "playerId": "honey", "leaderName": "Sejong", "civName": "Korea", "score": 1599, "civLeaderAvatarPath": "assets/civ_leader_avatars/sejong.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1440, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "ben", "leaderName": "Kristina", "civName": "Sweden", "score": 1290, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1210, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-03-31-01",
+      "dateUK": "31/03/2026",
+      "victoryType": "Score",
+      "winnerPlayerId": "ben",
+      "notes": "Cycle 3/5",
+      "entries": [
+        { "playerId": "ben", "leaderName": "Trajan", "civName": "Rome", "score": 975, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "honey", "leaderName": "Nzinga Mbande", "civName": "Congo", "score": 915, "civLeaderAvatarPath": "assets/civ_leader_avatars/nzinga_mbande.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 868, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Theodora", "civName": "Byzantine", "score": 825, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 802, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-03-24-01",
+      "dateUK": "24/03/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "sam",
+      "notes": "Cycle 3/5",
+      "entries": [
+        { "playerId": "sam", "leaderName": "Kristina", "civName": "Sweden", "score": 1476, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "honey", "leaderName": "Theodora", "civName": "Byzantine", "score": 1421, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1342, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Cyrus", "civName": "Persia", "score": 1245, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "ben", "leaderName": "Trajan", "civName": "Rome", "score": 1182, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" }
+      ]
+    },
+
+    {
+      "id": "2026-03-17-01",
+      "dateUK": "17/03/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "honey",
+      "notes": "Cycle 2/5",
+      "entries": [
+        { "playerId": "honey", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1490, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1412, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Kristina", "civName": "Sweden", "score": 1305, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1215, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1150, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-03-10-01",
+      "dateUK": "10/03/2026",
+      "victoryType": "Domination",
+      "winnerPlayerId": "jack",
+      "notes": "Cycle 2/5",
+      "entries": [
+        { "playerId": "jack", "leaderName": "Trajan", "civName": "Rome", "score": 1698, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "honey", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1610, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Gorgo", "civName": "Greece", "score": 1415, "civLeaderAvatarPath": "assets/civ_leader_avatars/gorgo.png" },
+        { "playerId": "ben", "leaderName": "Pericles", "civName": "Greece", "score": 1260, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "sam", "leaderName": "Cyrus", "civName": "Persia", "score": 1186, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" }
+      ]
+    },
+    {
+      "id": "2026-03-03-01",
+      "dateUK": "03/03/2026",
+      "victoryType": "Science",
+      "winnerPlayerId": "charlie",
+      "notes": "Cycle 2/5",
+      "entries": [
+        { "playerId": "charlie", "leaderName": "Sejong", "civName": "Korea", "score": 1658, "civLeaderAvatarPath": "assets/civ_leader_avatars/sejong.png" },
+        { "playerId": "honey", "leaderName": "Seondeok", "civName": "Korea", "score": 1595, "civLeaderAvatarPath": "assets/civ_leader_avatars/seondeok.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1442, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "ben", "leaderName": "Kristina", "civName": "Sweden", "score": 1288, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1212, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-02-24-01",
+      "dateUK": "24/02/2026",
+      "victoryType": "Score",
+      "winnerPlayerId": "ben",
+      "notes": "Cycle 2/5",
+      "entries": [
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 965, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "honey", "leaderName": "Nzinga Mbande", "civName": "Congo", "score": 910, "civLeaderAvatarPath": "assets/civ_leader_avatars/nzinga_mbande.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 865, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Theodora", "civName": "Byzantine", "score": 826, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 803, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-02-17-01",
+      "dateUK": "17/02/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "sam",
+      "notes": "Cycle 2/5",
+      "entries": [
+        { "playerId": "sam", "leaderName": "Pericles", "civName": "Greece", "score": 1468, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "honey", "leaderName": "Theodora", "civName": "Byzantine", "score": 1418, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1339, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Cyrus", "civName": "Persia", "score": 1246, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "ben", "leaderName": "Trajan", "civName": "Rome", "score": 1181, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" }
+      ]
+    },
+
+    {
+      "id": "2026-02-10-01",
+      "dateUK": "10/02/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "honey",
+      "notes": "Cycle 1/5",
+      "entries": [
+        { "playerId": "honey", "leaderName": "Nzinga Mbande", "civName": "Congo", "score": 1470, "civLeaderAvatarPath": "assets/civ_leader_avatars/nzinga_mbande.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1400, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Kristina", "civName": "Sweden", "score": 1290, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 1210, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1145, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-02-03-01",
+      "dateUK": "03/02/2026",
+      "victoryType": "Domination",
+      "winnerPlayerId": "jack",
+      "notes": "Cycle 1/5",
+      "entries": [
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 1682, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "honey", "leaderName": "Trajan", "civName": "Rome", "score": 1605, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" },
+        { "playerId": "charlie", "leaderName": "Theodora", "civName": "Byzantine", "score": 1410, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "ben", "leaderName": "Pericles", "civName": "Greece", "score": 1255, "civLeaderAvatarPath": "assets/civ_leader_avatars/pericles.png" },
+        { "playerId": "sam", "leaderName": "Gorgo", "civName": "Greece", "score": 1180, "civLeaderAvatarPath": "assets/civ_leader_avatars/gorgo.png" }
+      ]
+    },
+    {
+      "id": "2026-01-27-01",
+      "dateUK": "27/01/2026",
+      "victoryType": "Science",
+      "winnerPlayerId": "charlie",
+      "notes": "Cycle 1/5",
+      "entries": [
+        { "playerId": "charlie", "leaderName": "Seondeok", "civName": "Korea", "score": 1648, "civLeaderAvatarPath": "assets/civ_leader_avatars/seondeok.png" },
+        { "playerId": "honey", "leaderName": "Sejong", "civName": "Korea", "score": 1588, "civLeaderAvatarPath": "assets/civ_leader_avatars/sejong.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1435, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "ben", "leaderName": "Kristina", "civName": "Sweden", "score": 1285, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 1212, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-01-20-01",
+      "dateUK": "20/01/2026",
+      "victoryType": "Score",
+      "winnerPlayerId": "ben",
+      "notes": "Cycle 1/5",
+      "entries": [
+        { "playerId": "ben", "leaderName": "Cyrus", "civName": "Persia", "score": 952, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "honey", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 905, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "jack", "leaderName": "Frederick Barbarossa", "civName": "Germany", "score": 862, "civLeaderAvatarPath": "assets/civ_leader_avatars/frederick_barbarossa.png" },
+        { "playerId": "charlie", "leaderName": "Kristina", "civName": "Sweden", "score": 820, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "sam", "leaderName": "Wilhelmina", "civName": "Netherlands", "score": 790, "civLeaderAvatarPath": "assets/civ_leader_avatars/wilhelmina.png" }
+      ]
+    },
+    {
+      "id": "2026-01-13-01",
+      "dateUK": "13/01/2026",
+      "victoryType": "Culture",
+      "winnerPlayerId": "sam",
+      "notes": "Cycle 1/5",
+      "entries": [
+        { "playerId": "sam", "leaderName": "Kristina", "civName": "Sweden", "score": 1455, "civLeaderAvatarPath": "assets/civ_leader_avatars/kristina.png" },
+        { "playerId": "honey", "leaderName": "Theodora", "civName": "Byzantine", "score": 1412, "civLeaderAvatarPath": "assets/civ_leader_avatars/theodora.png" },
+        { "playerId": "jack", "leaderName": "Menelik II", "civName": "Ethiopia", "score": 1335, "civLeaderAvatarPath": "assets/civ_leader_avatars/menelik_ii.png" },
+        { "playerId": "charlie", "leaderName": "Cyrus", "civName": "Persia", "score": 1242, "civLeaderAvatarPath": "assets/civ_leader_avatars/cyrus.png" },
+        { "playerId": "ben", "leaderName": "Trajan", "civName": "Rome", "score": 1180, "civLeaderAvatarPath": "assets/civ_leader_avatars/trajan.png" }
+      ]
+    }
+  ]
+}

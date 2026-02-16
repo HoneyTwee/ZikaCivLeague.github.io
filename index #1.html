@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Civ League</title>
+
+  <style>
+    :root{
+      --panelW: 100vw;
+      --panelH: 100vh;
+
+      --uiGold: rgba(214, 180, 90, 0.95);
+      --uiGoldDark: rgba(130, 95, 30, 0.85);
+      --uiInk: rgba(35, 22, 10, 0.92);
+
+      --cardBg: rgba(255,255,255,0.78);
+      --cardBorder: rgba(120, 85, 35, 0.35);
+
+      --shadow: 0 16px 50px rgba(0,0,0,0.35);
+      --radius: 18px;
+
+      --avatarSize: 64px;
+      --leaderSize: 64px;
+      --trophySize: 44px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden; /* we scroll horizontally inside #scroller */
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #05060a;
+      color: #fff;
+    }
+
+    /* Horizontal scroller */
+    #scroller {
+      height: 100vh;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #row {
+      display: flex;
+      height: 100%;
+      width: max-content;
+    }
+
+    .panel {
+      position: relative;
+      width: var(--panelW);
+      height: var(--panelH);
+      flex: 0 0 var(--panelW);
+      scroll-snap-align: start;
+      overflow: hidden;
+    }
+
+    /* Background helpers */
+    .bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-size: cover;
+      background-position: center;
+      transform: translate3d(0,0,0);
+      will-change: transform;
+    }
+
+    /* PODIUM BACKGROUND */
+    .bg-map {
+      background-image:
+        radial-gradient(1200px 800px at 25% 20%, rgba(130,170,255,0.22), transparent 60%),
+        radial-gradient(900px 600px at 70% 60%, rgba(255,255,255,0.10), transparent 65%),
+        url("assets/backgrounds/map.png");
+      filter: saturate(1.05) contrast(1.05);
+    }
+
+    /* PARCHMENT BACKGROUND + layers for parallax */
+    .bg-parchment {
+      background-image: url("assets/backgrounds/parchment.png");
+      filter: saturate(1.03) contrast(1.02);
+    }
+
+    /* Optional overlay layers (placeholder until you add assets) */
+    .bg-lines {
+      opacity: 0.14;
+      mix-blend-mode: multiply;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 38px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 48px);
+      background-size: auto;
+      background-position: left top;
+    }
+
+    .bg-characters {
+      opacity: 0.85;
+      background-image: none; /* later: url("assets/characters_band.png") */
+      background-repeat: repeat-x;
+      background-size: auto 170px;
+      background-position: left bottom;
+      filter: saturate(1.05) contrast(1.05);
+    }
+
+    /* Foreground content container */
+    .content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* CIV-ish panel */
+    .frame {
+      background: var(--cardBg);
+      border: 1px solid var(--cardBorder);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      color: var(--uiInk);
+      overflow: hidden;
+    }
+
+    /* Headings */
+    .titleRow {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .leagueTitle {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 0.6px;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 10px 26px rgba(0,0,0,0.35);
+    }
+
+    .subTitle {
+      margin: 0;
+      opacity: 0.85;
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .hint {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 5;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.35);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(6px);
+      user-select: none;
+    }
+
+    /* PODIUM layout */
+    .podiumWrap {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .podiumMain {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .statsSide {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .podiumGrid {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .podiumHeadline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(10,15,25,0.35);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.9);
+      font-size: 12px;
+      user-select: none;
+    }
+
+    .leaderboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    /* Podium cards */
+    .pCard {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.92);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+      backdrop-filter: blur(6px);
+    }
+
+    .pCard.big {
+      grid-column: 1 / span 3;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background:
+        linear-gradient(135deg, rgba(214,180,90,0.18), rgba(0,0,0,0.25) 55%),
+        rgba(0,0,0,0.28);
+    }
+
+    .rankBadge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.16);
+      font-size: 12px;
+    }
+
+    .avatar {
+      width: var(--avatarSize);
+      height: var(--avatarSize);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.10);
+      flex: 0 0 auto;
+    }
+
+    .avatar.big {
+      width: 96px;
+      height: 96px;
+      border-width: 2px;
+    }
+
+    .nameLine {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .pName {
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .pStats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      font-size: 12px;
+      opacity: 0.95;
+    }
+
+    .statBox {
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+      min-height: 56px;
+    }
+
+    .statBox .k {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+    .statBox .v {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    /* Side stats cards */
+    .sideCard {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255,255,255,0.92);
+      backdrop-filter: blur(6px);
+    }
+
+    .sideCard h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .sideCard .line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      opacity: 0.92;
+      padding: 4px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.18);
+    }
+    .sideCard .line:last-child { border-bottom: none; }
+
+    /* MATCH panel layout */
+    .matchHeader {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--uiInk);
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(120,85,35,0.22);
+      background: rgba(255,255,255,0.25);
+    }
+
+    .matchHeader h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.4px;
+    }
+    .matchHeader .meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .badge {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(214,180,90,0.22);
+      border: 1px solid rgba(130,95,30,0.22);
+      font-weight: 700;
+      color: rgba(60,40,20,0.92);
+    }
+
+    .matchBody {
+      padding: 18px;
+      display: grid;
+      grid-template-rows: 2fr 1fr; /* table upper, podium block lower */
+      gap: 14px;
+      height: calc(100% - 62px); /* minus header-ish */
+      min-height: 0;
+    }
+
+    /* Table */
+    .tableWrap {
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(120,85,35,0.20);
+      background: rgba(255,255,255,0.62);
+      min-height: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: rgba(35,22,10,0.92);
+      font-size: 14px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 12px 12px;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      background: rgba(214,180,90,0.20);
+      border-bottom: 1px solid rgba(120,85,35,0.18);
+    }
+
+    tbody td {
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(120,85,35,0.14);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .tdPoints {
+      font-weight: 900;
+      color: rgba(90,55,18,0.95);
+      width: 100px;
+      white-space: nowrap;
+    }
+
+    .tdPlayer {
+      font-weight: 800;
+      width: 220px;
+      white-space: nowrap;
+    }
+
+    .tdScore {
+      font-variant-numeric: tabular-nums;
+      width: 110px;
+    }
+
+    .tdCiv {
+      opacity: 0.92;
+    }
+
+    .medal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      margin-right: 8px;
+      font-size: 16px;
+      vertical-align: middle;
+    }
+    .gold { background: rgba(214,180,90,0.55); border: 1px solid rgba(130,95,30,0.35); }
+    .silver { background: rgba(220,220,230,0.70); border: 1px solid rgba(120,120,140,0.35); }
+    .bronze { background: rgba(190,125,80,0.60); border: 1px solid rgba(115,70,30,0.35); }
+
+    .winnerGlow {
+      background: linear-gradient(90deg, rgba(214,180,90,0.22), transparent 55%);
+    }
+
+    /* Trophy block under table */
+    .trophyRowWrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .trophyCard {
+      border-radius: 16px;
+      border: 1px solid rgba(120,85,35,0.20);
+      background: rgba(255,255,255,0.64);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .trophyIcon {
+      width: var(--trophySize);
+      height: var(--trophySize);
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 24px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: rgba(255,255,255,0.35);
+    }
+
+    .trophyTitle {
+      margin: 0 0 6px 0;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      color: rgba(45,28,12,0.92);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .avatarPair {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .leaderAvatar {
+      width: var(--leaderSize);
+      height: var(--leaderSize);
+      border-radius: 14px;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.14);
+      background: rgba(0,0,0,0.05);
+    }
+
+    .pairText {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .pairText .who {
+      font-weight: 900;
+      color: rgba(35,22,10,0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pairText .as {
+      font-size: 12px;
+      opacity: 0.86;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Small footer ribbon */
+    .footerRibbon {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 5;
+      font-size: 12px;
+      opacity: 0.85;
+      color: rgba(255,255,255,0.78);
+      text-shadow: 0 10px 26px rgba(0,0,0,0.30);
+      user-select: none;
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 980px) {
+      .podiumWrap { grid-template-columns: 1fr; }
+      .leaderboard { grid-template-columns: 1fr; grid-template-rows: auto; }
+      .pCard.big { grid-column: auto; grid-template-columns: 1fr; }
+      .pStats { grid-template-columns: 1fr 1fr; }
+      .matchBody { grid-template-rows: 1.3fr 1fr; }
+      .trophyRowWrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroller" aria-label="Civ League horizontal scroller">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    // ---------- Utilities ----------
+    function byId(list) {
+      const m = new Map();
+      for (const item of list) m.set(item.id, item);
+      return m;
+    }
+
+    function safeText(s) {
+      return (s ?? "").toString();
+    }
+
+    function fmtPct(x) {
+      if (!isFinite(x)) return "0%";
+      return `${Math.round(x * 100)}%`;
+    }
+
+    function createEl(tag, cls, html) {
+      const el = document.createElement(tag);
+      if (cls) el.className = cls;
+      if (html !== undefined) el.innerHTML = html;
+      return el;
+    }
+
+    function medalForPlace(place) {
+      if (place === 1) return { cls: "gold", icon: "🥇", label: "Gold" };
+      if (place === 2) return { cls: "silver", icon: "🥈", label: "Silver" };
+      if (place === 3) return { cls: "bronze", icon: "🥉", label: "Bronze" };
+      return null;
+    }
+
+    // Compute placements:
+    // - Winner forced to place 1 (winnerPlayerId)
+    // - Everyone else sorted by score desc => place 2..n
+    function computePlacements(match) {
+      const entries = [...match.entries];
+
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+
+      others.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if (winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for (let i = 0; i < others.length; i++) {
+        ordered.push({ ...others[i], place: i + 2 });
+      }
+
+      const n = ordered.length;
+      for (const o of ordered) {
+        o.points = (n - o.place + 1);
+      }
+      return ordered;
+    }
+
+    function buildPlayerTotals(players, matches) {
+      const totals = new Map();
+      for (const p of players) {
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          totalPoints: 0,
+          games: 0,
+          wins: 0,
+          medals: { gold: 0, silver: 0, bronze: 0 },
+          victoryTypesWon: new Map()
+        });
+      }
+
+      for (const match of matches) {
+        const ordered = computePlacements(match);
+        for (const o of ordered) {
+          if (!totals.has(o.playerId)) continue;
+          const t = totals.get(o.playerId);
+
+          t.totalPoints += (o.points ?? 0);
+          t.games += 1;
+
+          if (o.place === 1) {
+            t.wins += 1;
+            const vt = safeText(match.victoryType);
+            t.victoryTypesWon.set(vt, (t.victoryTypesWon.get(vt) ?? 0) + 1);
+          }
+          if (o.place === 1) t.medals.gold += 1;
+          if (o.place === 2) t.medals.silver += 1;
+          if (o.place === 3) t.medals.bronze += 1;
+        }
+      }
+
+      const rows = [...totals.values()].map(t => {
+        const winRate = t.games ? t.wins / t.games : 0;
+        const avgPoints = t.games ? t.totalPoints / t.games : 0;
+        let favWinType = "";
+        let favWinCount = 0;
+        for (const [k, v] of t.victoryTypesWon.entries()) {
+          if (v > favWinCount) { favWinType = k; favWinCount = v; }
+        }
+        return { ...t, winRate, avgPoints, favWinType, favWinCount };
+      });
+
+      rows.sort((a, b) => b.totalPoints - a.totalPoints);
+      return rows;
+    }
+
+    function victoryTypeStats(matches) {
+      const counts = new Map();
+      for (const m of matches) {
+        const vt = safeText(m.victoryType);
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([victoryType, count]) => ({ victoryType, count, pct: count / total }));
+      rows.sort((a, b) => b.count - a.count);
+      return rows;
+    }
+
+    // ---------- Rendering ----------
+    function renderPodiumPanel(meta, totals, matches) {
+      const panel = createEl("section", "panel");
+      const bg = createEl("div", "bg bg-map");
+      panel.appendChild(bg);
+
+      const content = createEl("div", "content");
+      panel.appendChild(content);
+
+      const titleRow = createEl("div", "titleRow");
+      content.appendChild(titleRow);
+
+      const leagueTitle = createEl("h1", "leagueTitle", safeText(meta.leagueName || "Civ League"));
+      const sub = createEl("p", "subTitle", `${matches.length} games logged • scroll right for match history`);
+      titleRow.appendChild(leagueTitle);
+      titleRow.appendChild(sub);
+
+      const wrap = createEl("div", "podiumWrap");
+      content.appendChild(wrap);
+
+      const left = createEl("div", "podiumMain frame");
+      const right = createEl("div", "statsSide frame");
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+
+      // Left: podium cards
+      const grid = createEl("div", "podiumGrid");
+      left.appendChild(grid);
+
+      const headline = createEl("div", "podiumHeadline");
+      grid.appendChild(headline);
+
+      const pill1 = createEl("div", "pill", `🏆 <strong>League Standings</strong>`);
+      const pill2 = createEl("div", "pill", `📅 <strong>Latest:</strong> ${matches[0]?.dateUK ? safeText(matches[0].dateUK) : "—"}`);
+      headline.appendChild(pill1);
+      headline.appendChild(pill2);
+
+      const lb = createEl("div", "leaderboard");
+      grid.appendChild(lb);
+
+      // Top 5 featured (scales naturally)
+      const top = totals.slice(0, Math.max(5, Math.min(7, totals.length)));
+
+      function cardFor(rankIndex, big=false) {
+        const t = top[rankIndex];
+        if (!t) return null;
+
+        const c = createEl("div", big ? "pCard big" : "pCard");
+        const img = createEl("img", "avatar" + (big ? " big" : ""));
+        img.src = t.avatarPath;
+        img.alt = `${t.displayName} avatar`;
+        img.onerror = () => { img.style.display = "none"; };
+
+        const info = createEl("div");
+        const nameLine = createEl("div", "nameLine");
+        const name = createEl("p", "pName", safeText(t.displayName));
+        const badge = createEl("span", "rankBadge", `#${rankIndex + 1}`);
+        nameLine.appendChild(name);
+        nameLine.appendChild(badge);
+
+        const stats = createEl("div", "pStats");
+        stats.appendChild(statMini("Points", Math.round(t.totalPoints)));
+        stats.appendChild(statMini("Win rate", fmtPct(t.winRate)));
+        stats.appendChild(statMini("Avg pts", (t.avgPoints || 0).toFixed(2)));
+        stats.appendChild(statMini("Medals", `🥇${t.medals.gold} 🥈${t.medals.silver} 🥉${t.medals.bronze}`));
+
+        info.appendChild(nameLine);
+        info.appendChild(stats);
+
+        if (big) {
+          c.appendChild(img);
+          c.appendChild(info);
+        } else {
+          const topRow = createEl("div", "nameLine");
+          const leftSide = createEl("div", "avatarPair");
+          leftSide.appendChild(img);
+          const who = createEl("div", null);
+          who.appendChild(name);
+          leftSide.appendChild(who);
+          topRow.appendChild(leftSide);
+          topRow.appendChild(badge);
+
+          c.appendChild(topRow);
+
+          const mini = createEl("div", "pStats");
+          mini.style.gridTemplateColumns = "repeat(2, minmax(0,1fr))";
+          mini.appendChild(statMini("Points", Math.round(t.totalPoints)));
+          mini.appendChild(statMini("Wins", t.wins));
+          c.appendChild(mini);
+
+          const medalsLine = createEl("div", null, `<span style="opacity:.9">🥇${t.medals.gold} 🥈${t.medals.silver} 🥉${t.medals.bronze}</span>`);
+          c.appendChild(medalsLine);
+        }
+
+        return c;
+      }
+
+      function statMini(k, v) {
+        const b = createEl("div", "statBox");
+        b.appendChild(createEl("div", "k", safeText(k)));
+        b.appendChild(createEl("div", "v", safeText(v)));
+        return b;
+      }
+
+      // Big #1 then #2-#5
+      const bigCard = cardFor(0, true);
+      if (bigCard) lb.appendChild(bigCard);
+      for (let i = 1; i < Math.min(5, top.length); i++) {
+        const c = cardFor(i, false);
+        if (c) lb.appendChild(c);
+      }
+
+      // Right: league stats
+      const vStats = victoryTypeStats(matches);
+      const topV = vStats[0];
+
+      const s1 = createEl("div", "sideCard");
+      s1.appendChild(createEl("h3", null, "League Summary"));
+      s1.appendChild(sideLine("Games", matches.length));
+      s1.appendChild(sideLine("Players tracked", totals.length));
+      s1.appendChild(sideLine("Most common victory", topV ? `${topV.victoryType} (${Math.round(topV.pct*100)}%)` : "—"));
+      right.appendChild(s1);
+
+      const s2 = createEl("div", "sideCard");
+      s2.appendChild(createEl("h3", null, "Victories Breakdown"));
+      for (const row of vStats.slice(0, 6)) {
+        s2.appendChild(sideLine(row.victoryType, `${row.count} (${Math.round(row.pct*100)}%)`));
+      }
+      right.appendChild(s2);
+
+      const s3 = createEl("div", "sideCard");
+      s3.appendChild(createEl("h3", null, "Controls"));
+      s3.appendChild(createEl("div", null,
+        `<div style="opacity:.92; font-size:13px; line-height:1.45">
+          • Use mouse wheel / trackpad to scroll right<br/>
+          • Drag the scrollbar at the bottom<br/>
+          • Each screen snaps neatly
+        </div>`
+      ));
+      right.appendChild(s3);
+
+      function sideLine(a, b) {
+        const line = createEl("div", "line");
+        line.appendChild(createEl("div", null, safeText(a)));
+        line.appendChild(createEl("div", null, `<strong>${safeText(b)}</strong>`));
+        return line;
+      }
+
+      // Hint overlay
+      const hint = createEl("div", "hint", "Scroll → for match history");
+      panel.appendChild(hint);
+
+      const footer = createEl("div", "footerRibbon", "Civ League • data.json drives everything");
+      panel.appendChild(footer);
+
+      return panel;
+    }
+
+    function renderMatchPanel(match, playersById) {
+      const panel = createEl("section", "panel");
+
+      // Background layers (parallax moved in JS)
+      const bgA = createEl("div", "bg bg-parchment");
+      const bgB = createEl("div", "bg bg-lines");
+      const bgC = createEl("div", "bg bg-characters");
+
+      // mark these so JS can parallax them
+      bgA.dataset.parallax = "0.12";
+      bgB.dataset.parallax = "0.18";
+      bgC.dataset.parallax = "0.28";
+
+      panel.appendChild(bgA);
+      panel.appendChild(bgB);
+      panel.appendChild(bgC);
+
+      const content = createEl("div", "content");
+      panel.appendChild(content);
+
+      const frame = createEl("div", "frame");
+      frame.style.flex = "1";
+      frame.style.minHeight = "0";
+      content.appendChild(frame);
+
+      // Header
+      const header = createEl("div", "matchHeader");
+      const title = createEl("h2", null, `${safeText(match.dateUK)} – ${safeText(match.victoryType)} Victory`);
+      const meta = createEl("div", "meta");
+
+      const nPlayers = match.entries.length;
+      meta.appendChild(createEl("span", "badge", `Players: ${nPlayers}`));
+      meta.appendChild(createEl("span", "badge", `Points: 1–${nPlayers}`));
+
+      header.appendChild(title);
+      header.appendChild(meta);
+      frame.appendChild(header);
+
+      // Body: table + trophy block
+      const body = createEl("div", "matchBody");
+      frame.appendChild(body);
+
+      const tableWrap = createEl("div", "tableWrap");
+      body.appendChild(tableWrap);
+
+      const table = createEl("table");
+      tableWrap.appendChild(table);
+
+      const thead = createEl("thead");
+      thead.innerHTML = `
+        <tr>
+          <th>Points</th>
+          <th>Player</th>
+          <th>Score</th>
+          <th>Civ</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+
+      const tbody = createEl("tbody");
+      table.appendChild(tbody);
+
+      const ordered = computePlacements(match);
+
+      // Build table rows
+      for (const row of ordered) {
+        const p = playersById.get(row.playerId);
+        const medal = medalForPlace(row.place);
+        const isWinner = (row.place === 1);
+
+        const tr = document.createElement("tr");
+        if (isWinner) tr.classList.add("winnerGlow");
+
+        const pointsTd = createEl("td", "tdPoints");
+        pointsTd.textContent = `${row.points} pts`;
+
+        const playerTd = createEl("td", "tdPlayer");
+        if (medal) {
+          const m = createEl("span", `medal ${medal.cls}`, medal.icon);
+          playerTd.appendChild(m);
+        } else {
+          // align non-medal rows a bit
+          const spacer = createEl("span");
+          spacer.style.display = "inline-block";
+          spacer.style.width = "34px";
+          playerTd.appendChild(spacer);
+        }
+        playerTd.appendChild(document.createTextNode(p ? p.displayName : row.playerId));
+
+        const scoreTd = createEl("td", "tdScore", `<strong>${row.score ?? 0}</strong>`);
+        const civTd = createEl("td", "tdCiv", `${safeText(row.leaderName || "")}${row.leaderName ? " | " : ""}${safeText(row.civName || "")}`);
+
+        tr.appendChild(pointsTd);
+        tr.appendChild(playerTd);
+        tr.appendChild(scoreTd);
+        tr.appendChild(civTd);
+
+        tbody.appendChild(tr);
+      }
+
+      // Trophy block: top 3
+      const trophyWrap = createEl("div", "trophyRowWrap");
+      body.appendChild(trophyWrap);
+
+      const top3 = ordered.filter(r => r.place <= 3);
+      // If fewer than 3 players, still render what exists
+      const trophyDefs = [
+        { place: 1, title: "Winner", icon: "🏆", cls: "gold" },
+        { place: 2, title: "Second", icon: "🥈", cls: "silver" },
+        { place: 3, title: "Third", icon: "🥉", cls: "bronze" }
+      ];
+
+      for (const def of trophyDefs) {
+        const r = top3.find(x => x.place === def.place);
+        const card = createEl("div", "trophyCard");
+
+        const icon = createEl("div", "trophyIcon");
+        icon.innerHTML = def.icon;
+        card.appendChild(icon);
+
+        const rightSide = createEl("div");
+        rightSide.appendChild(createEl("div", "trophyTitle", def.title));
+
+        if (r) {
+          const p = playersById.get(r.playerId);
+
+          const pair = createEl("div", "avatarPair");
+
+          // player avatar (circular)
+          const pImg = createEl("img", "avatar");
+          pImg.src = p?.avatarPath || "";
+          pImg.alt = `${p?.displayName || r.playerId} avatar`;
+          pImg.onerror = () => { pImg.style.display = "none"; };
+
+          // civ leader avatar (rounded square)
+          const lImg = createEl("img", "leaderAvatar");
+          lImg.src = safeText(r.civLeaderAvatarPath || "");
+          lImg.alt = `${safeText(r.leaderName || "")} avatar`;
+          lImg.onerror = () => { lImg.style.display = "none"; };
+
+          pair.appendChild(pImg);
+          pair.appendChild(lImg);
+
+          const text = createEl("div", "pairText");
+          text.appendChild(createEl("div", "who", p ? p.displayName : r.playerId));
+          text.appendChild(createEl("div", "as", `${safeText(r.leaderName)} | ${safeText(r.civName)} • Score ${r.score}`));
+
+          pair.appendChild(text);
+          rightSide.appendChild(pair);
+        } else {
+          rightSide.appendChild(createEl("div", null, `<span style="opacity:.75">—</span>`));
+        }
+
+        card.appendChild(rightSide);
+        trophyWrap.appendChild(card);
+      }
+
+      // Small footer text (optional)
+      const footer = createEl("div", "footerRibbon", match.notes ? safeText(match.notes) : "");
+      if (match.notes) panel.appendChild(footer);
+
+      return panel;
+    }
+
+    // ---------- App bootstrap ----------
+    async function main() {
+      const res = await fetch("data.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      const players = data.players || [];
+      const matches = (data.matches || []).slice();
+
+      // Sort matches newest -> oldest for podium “latest” label,
+      // but for the ribbon we’ll keep them newest -> oldest too (most recent first).
+      // If you prefer oldest -> newest later, change the sort.
+      matches.sort((a, b) => {
+        // dateUK "DD/MM/YYYY" -> "YYYYMMDD" comparable
+        const key = (d) => {
+          const [dd, mm, yyyy] = safeText(d).split("/");
+          return `${yyyy}${mm}${dd}`;
+        };
+        return key(b.dateUK).localeCompare(key(a.dateUK));
+      });
+
+      const playersMap = byId(players);
+      const totals = buildPlayerTotals(players, matches);
+
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+
+      // Podium panel
+      row.appendChild(renderPodiumPanel(data.meta || {}, totals, matches));
+
+      // Match panels
+      for (const m of matches) {
+        row.appendChild(renderMatchPanel(m, playersMap));
+      }
+
+      // Set overall row width correctly (flex does it, but this avoids rare snap quirks)
+      // Not strictly required.
+
+      // Scrolling helpers
+      const scroller = document.getElementById("scroller");
+
+      // Mouse wheel -> horizontal scroll (great for desktop mice)
+      scroller.addEventListener("wheel", (e) => {
+        // Trackpads often supply deltaX naturally; we only convert strong deltaY.
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          scroller.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+
+      // Parallax update for parchment panels
+      function updateParallax() {
+        const x = scroller.scrollLeft;
+        const layers = scroller.querySelectorAll("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          // move opposite scroll for depth feel
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", updateParallax);
+      updateParallax();
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family: system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0;">Civ League</h1>
+          <p style="opacity:.9; line-height:1.5;">
+            Could not load <code>data.json</code>.<br/>
+            Make sure you're running a local server (not just double-clicking the HTML).
+          </p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+          <p style="opacity:.85">Windows quick start: <code>python -m http.server 8000</code> then open <code>http://localhost:8000</code></p>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

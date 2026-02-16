@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zika Civ League 2026</title>
+
+  <style>
+    /* ====== FONT (put your .otf at assets/fonts/zika-title.otf) ====== */
+    @font-face{
+      font-family: "ZikaTitle";
+      src: url("assets/fonts/zika-title.otf") format("opentype");
+      font-display: swap;
+    }
+
+    :root{
+      --ink: rgba(255,255,255,0.92);
+      --inkDim: rgba(255,255,255,0.78);
+
+      --gold: rgba(214,180,90,1);
+      --silver: rgba(210,210,225,1);
+      --bronze: rgba(190,125,80,1);
+
+      --shadow: 0 22px 65px rgba(0,0,0,0.40);
+      --softShadow: 0 10px 30px rgba(0,0,0,0.25);
+
+      --podiumW: 100vw;
+      --podiumH: 100vh;
+
+      --nodeW: 520px;      /* width of each match node */
+      --nodeGap: 90px;     /* gap between nodes */
+      --timelinePad: 120px;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#05060a;
+      color:var(--ink);
+    }
+
+    /* ====== HORIZONTAL SCROLLER ====== */
+    #scroller{
+      height:100vh;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-behavior:smooth;
+      -webkit-overflow-scrolling:touch;
+      outline:none;
+    }
+    #row{
+      display:flex;
+      height:100%;
+      width:max-content;
+    }
+
+    /* ====== PODIUM PANEL (full screen) ====== */
+    .podiumPanel{
+      position:relative;
+      width:var(--podiumW);
+      height:var(--podiumH);
+      flex:0 0 var(--podiumW);
+      overflow:hidden;
+    }
+
+    .bgMap{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background:
+        radial-gradient(1200px 800px at 25% 20%, rgba(130,170,255,0.22), transparent 60%),
+        radial-gradient(900px 600px at 70% 60%, rgba(255,255,255,0.10), transparent 65%),
+        url("assets/backgrounds/map.png");
+      background-size:cover;
+      background-position:center;
+      filter:saturate(1.05) contrast(1.05);
+      transform: translate3d(0,0,0);
+    }
+
+    /* subtle dark tint instead of light-blue UI panels */
+    .mapTint{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background: rgba(5,10,18,0.32);
+    }
+
+    .podiumContent{
+      position:relative;
+      z-index:2;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:34px 28px 20px;
+      gap:18px;
+      text-align:center;
+    }
+
+    .leagueTitle{
+      margin:0;
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      font-size: 56px;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.94);
+      text-shadow: 0 22px 70px rgba(0,0,0,0.45);
+    }
+
+    .leagueSub{
+      margin:0;
+      font-size: 14px;
+      color: var(--inkDim);
+      opacity:0.95;
+    }
+
+    /* ====== PODIUM LAYOUT (no boxes, floating) ====== */
+    .podiumGrid{
+      width:min(980px, 92vw);
+      display:grid;
+      grid-template-rows: auto auto auto;
+      gap: 18px;
+      margin-top: 10px;
+      align-items:center;
+      justify-items:center;
+    }
+
+    .podiumRow{
+      display:flex;
+      gap: 70px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .podiumRow.top{ gap: 0; }
+    .podiumRow.mid{ gap: 110px; }
+    .podiumRow.low{ gap: 110px; }
+
+    .playerFloat{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 14px;
+      filter: drop-shadow(var(--softShadow));
+    }
+
+    /* Medal/trophy stack to the LEFT of avatar (large trophies) */
+    .trophyStack{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      align-items:flex-end;
+      min-width: 94px;
+    }
+    .trophyLine{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 18px;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      white-space:nowrap;
+    }
+    .trophyIcon{
+      font-size: 26px; /* large */
+      width: 30px;
+      text-align:center;
+    }
+
+    .avatarWrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .rankPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height: 30px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.92);
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      backdrop-filter: blur(8px);
+    }
+
+    .avatar{
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .avatar.big{
+      width: 158px;
+      height: 158px;
+      border-width: 2px;
+      box-shadow: 0 26px 80px rgba(0,0,0,0.40);
+    }
+
+    .pName{
+      margin:0;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+      color: rgba(255,255,255,0.94);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+
+    .pMini{
+      margin:0;
+      font-size: 13px;
+      color: rgba(255,255,255,0.78);
+      opacity:0.95;
+    }
+
+    /* Bottom text stats (centered) */
+    .bottomStats{
+      margin-top: 14px;
+      width:min(980px, 92vw);
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,0.80);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+
+    .statsLine{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 18px;
+      justify-content:center;
+      font-size: 13px;
+      opacity:0.98;
+    }
+    .statsLine strong{ color: rgba(255,255,255,0.94); }
+
+    .scrollHint{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index:3;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+
+    /* ====== TIMELINE WORLD (wide, not per-game full page) ====== */
+    .timelinePanel{
+      position:relative;
+      height:100vh;
+      flex: 0 0 auto; /* width set dynamically in JS */
+      overflow:hidden;
+    }
+
+    .bgParchment{
+      position:absolute;
+      inset:0;
+      z-index:0;
+      background: url("assets/backgrounds/parchment.png");
+      background-size: cover;
+      background-position: left center;
+      filter:saturate(1.02) contrast(1.02);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgLines{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      opacity:0.13;
+      mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 42px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 58px);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+    .bgCharacters{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      opacity:0.9;
+      background-image:none; /* later: url("assets/characters_band.png") */
+      background-repeat:repeat-x;
+      background-size:auto 170px;
+      background-position:left bottom;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    /* Timeline content */
+    .timelineContent{
+      position:relative;
+      z-index:5;
+      height:100%;
+      padding: 30px var(--timelinePad);
+      display:flex;
+      align-items:stretch;
+    }
+
+    .nodesRow{
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      gap: var(--nodeGap);
+      height:100%;
+      padding-right: var(--timelinePad);
+    }
+
+    /* Dotted line across timeline */
+    .timelineLine{
+      position:absolute;
+      left: calc(var(--timelinePad) + 20px);
+      right: var(--timelinePad);
+      top: 58%;
+      height: 2px;
+      border-top: 2px dotted rgba(70,45,20,0.45);
+      z-index:4;
+      pointer-events:none;
+    }
+
+    /* Each match node is “skinny” */
+    .matchNode{
+      width: var(--nodeW);
+      height: 100%;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+    }
+
+    /* Node dot on the dotted line */
+    .nodeDot{
+      position:absolute;
+      top: calc(58% - 9px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      border: 2px solid rgba(70,45,20,0.42);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+      z-index:6;
+    }
+
+    /* Table sits ~2/3 up (around 30–35% from top) */
+    .matchTableWrap{
+      margin-top: 10%;
+      width:100%;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid rgba(110,75,30,0.25);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      color: rgba(35,22,10,0.92);
+    }
+
+    .matchTitle{
+      padding: 12px 14px;
+      background: rgba(214,180,90,0.18);
+      border-bottom: 1px solid rgba(110,75,30,0.18);
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      letter-spacing: 0.6px;
+      font-size: 16px;
+      color: rgba(45,28,12,0.92);
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th{
+      text-align:left;
+      padding: 10px 12px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity:0.9;
+      border-bottom: 1px solid rgba(110,75,30,0.16);
+    }
+    tbody td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(110,75,30,0.12);
+      vertical-align:middle;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    .tdPoints{ font-weight: 900; width: 90px; }
+    .tdPlayer{ font-weight: 900; width: 150px; white-space:nowrap; }
+    .tdScore{ width: 90px; font-variant-numeric: tabular-nums; }
+    .tdCiv{ opacity: 0.92; }
+
+    /* Winner/Top3 vertical strip under table */
+    .podiumStrip{
+      position:absolute;
+      top: 58%;
+      transform: translateY(-50%);
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      gap: 16px;
+      align-items:center;
+      justify-content:center;
+      padding-top: 20px;
+      pointer-events:none; /* purely visual */
+    }
+
+    .placeRow{
+      width: 100%;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 12px;
+      padding: 0 6px;
+      pointer-events:none;
+    }
+
+    .placeIcon{
+      width: 34px;
+      display:flex;
+      justify-content:center;
+      font-size: 22px;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
+    }
+
+    .miniAvatar{
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.25);
+    }
+
+    .civAvatar{
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 1px solid rgba(0,0,0,0.16);
+      background: rgba(0,0,0,0.05);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+    }
+
+    /* Placeholder if civ leader avatar missing */
+    .civPlaceholder{
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      border: 1px dashed rgba(60,40,20,0.45);
+      background: rgba(255,255,255,0.25);
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      color: rgba(60,40,20,0.65);
+    }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 900px){
+      .leagueTitle{ font-size: 42px; }
+      .podiumRow.mid, .podiumRow.low{ gap: 60px; }
+      .trophyStack{ min-width: 80px; }
+      .avatar{ width:110px; height:110px; }
+      .avatar.big{ width:140px; height:140px; }
+      :root{ --nodeW: 460px; --nodeGap: 70px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroller" tabindex="0" aria-label="Zika Civ League horizontal scroller">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    // ---------- helpers ----------
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+
+    function safeText(s){ return (s ?? "").toString(); }
+
+    function parseUKDateKey(dateUK){
+      // "DD/MM/YYYY" -> "YYYYMMDD"
+      const [dd, mm, yyyy] = safeText(dateUK).split("/");
+      return `${yyyy}${mm}${dd}`;
+    }
+
+    function byId(list){
+      const m = new Map();
+      for(const x of list) m.set(x.id, x);
+      return m;
+    }
+
+    function computePlacements(match){
+      const entries = [...match.entries];
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+
+      others.sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if(winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for(let i=0;i<others.length;i++){
+        ordered.push({ ...others[i], place: i+2 });
+      }
+
+      const n = ordered.length;
+      for(const o of ordered){
+        o.points = (n - o.place + 1);
+      }
+      return ordered;
+    }
+
+    function buildTotals(players, matches){
+      const totals = new Map();
+      for(const p of players){
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          games: 0,
+          totalPoints: 0,
+          wins: 0,
+          medals: { gold:0, silver:0, bronze:0 }
+        });
+      }
+
+      for(const match of matches){
+        const ordered = computePlacements(match);
+        for(const o of ordered){
+          const t = totals.get(o.playerId);
+          if(!t) continue;
+          t.games += 1;
+          t.totalPoints += (o.points ?? 0);
+          if(o.place === 1) t.wins += 1;
+          if(o.place === 1) t.medals.gold += 1;
+          if(o.place === 2) t.medals.silver += 1;
+          if(o.place === 3) t.medals.bronze += 1;
+        }
+      }
+
+      const rows = [...totals.values()].map(t => ({
+        ...t,
+        winRate: t.games ? (t.wins / t.games) : 0,
+        avgPoints: t.games ? (t.totalPoints / t.games) : 0
+      }));
+
+      rows.sort((a,b) => b.totalPoints - a.totalPoints);
+      return rows;
+    }
+
+    function victoryTypeBreakdown(matches){
+      const counts = new Map();
+      for(const m of matches){
+        const vt = safeText(m.victoryType);
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([k,v]) => ({ victoryType:k, count:v, pct:v/total }));
+      rows.sort((a,b) => b.count - a.count);
+      return rows;
+    }
+
+    function pct(x){ return `${Math.round(x*100)}%`; }
+
+    // ---------- render ----------
+    function renderPodium(meta, totals, matches){
+      const panel = document.createElement("section");
+      panel.className = "podiumPanel";
+
+      const bg = document.createElement("div");
+      bg.className = "bgMap";
+      panel.appendChild(bg);
+
+      const tint = document.createElement("div");
+      tint.className = "mapTint";
+      panel.appendChild(tint);
+
+      const content = document.createElement("div");
+      content.className = "podiumContent";
+      panel.appendChild(content);
+
+      const title = document.createElement("h1");
+      title.className = "leagueTitle";
+      title.textContent = meta.leagueName || "Zika Civ League 2026";
+      content.appendChild(title);
+
+      const sub = document.createElement("p");
+      sub.className = "leagueSub";
+      sub.textContent = `${matches.length} games logged • scroll right for match timeline`;
+      content.appendChild(sub);
+
+      const grid = document.createElement("div");
+      grid.className = "podiumGrid";
+      content.appendChild(grid);
+
+      const top5 = totals.slice(0, 5);
+
+      // layout: #1 top center, #2-#3, #4-#5
+      const rowTop = document.createElement("div");
+      rowTop.className = "podiumRow top";
+      grid.appendChild(rowTop);
+
+      const rowMid = document.createElement("div");
+      rowMid.className = "podiumRow mid";
+      grid.appendChild(rowMid);
+
+      const rowLow = document.createElement("div");
+      rowLow.className = "podiumRow low";
+      grid.appendChild(rowLow);
+
+      function playerFloat(t, rank){
+        const wrap = document.createElement("div");
+        wrap.className = "playerFloat";
+
+        const trophies = document.createElement("div");
+        trophies.className = "trophyStack";
+
+        // big trophy icons with counts
+        trophies.appendChild(trophyLine("🏆", t.medals.gold));
+        trophies.appendChild(trophyLine("🥈", t.medals.silver));
+        trophies.appendChild(trophyLine("🥉", t.medals.bronze));
+        wrap.appendChild(trophies);
+
+        const aWrap = document.createElement("div");
+        aWrap.className = "avatarWrap";
+
+        const rankPill = document.createElement("div");
+        rankPill.className = "rankPill";
+        rankPill.textContent = `#${rank}`;
+        aWrap.appendChild(rankPill);
+
+        const img = document.createElement("img");
+        img.className = "avatar" + (rank === 1 ? " big" : "");
+        img.src = t.avatarPath;
+        img.alt = `${t.displayName} avatar`;
+        img.onerror = () => { img.style.display = "none"; };
+        aWrap.appendChild(img);
+
+        const name = document.createElement("p");
+        name.className = "pName";
+        name.textContent = t.displayName;
+        aWrap.appendChild(name);
+
+        const mini = document.createElement("p");
+        mini.className = "pMini";
+        mini.innerHTML = `<strong>${Math.round(t.totalPoints)}</strong> pts • <strong>${pct(t.winRate)}</strong> win • <strong>${t.avgPoints.toFixed(2)}</strong> avg`;
+        aWrap.appendChild(mini);
+
+        wrap.appendChild(aWrap);
+        return wrap;
+      }
+
+      function trophyLine(icon, count){
+        const line = document.createElement("div");
+        line.className = "trophyLine";
+        const i = document.createElement("div");
+        i.className = "trophyIcon";
+        i.textContent = icon;
+        const c = document.createElement("div");
+        c.textContent = `×${count}`;
+        line.appendChild(i);
+        line.appendChild(c);
+        return line;
+      }
+
+      if(top5[0]) rowTop.appendChild(playerFloat(top5[0], 1));
+      if(top5[1]) rowMid.appendChild(playerFloat(top5[1], 2));
+      if(top5[2]) rowMid.appendChild(playerFloat(top5[2], 3));
+      if(top5[3]) rowLow.appendChild(playerFloat(top5[3], 4));
+      if(top5[4]) rowLow.appendChild(playerFloat(top5[4], 5));
+
+      // bottom stats text (centered)
+      const breakdown = victoryTypeBreakdown(matches);
+      const topV = breakdown[0];
+
+      const bottom = document.createElement("div");
+      bottom.className = "bottomStats";
+      bottom.innerHTML = `
+        <div class="statsLine">
+          <span><strong>Most common victory:</strong> ${topV ? `${topV.victoryType} (${Math.round(topV.pct*100)}%)` : "—"}</span>
+          <span><strong>Players tracked:</strong> ${totals.length}</span>
+          <span><strong>Latest match:</strong> ${matches[0]?.dateUK ? safeText(matches[0].dateUK) : "—"}</span>
+        </div>
+        <div class="statsLine">
+          ${breakdown.slice(0,6).map(r => `<span><strong>${r.victoryType}:</strong> ${r.count} (${Math.round(r.pct*100)}%)</span>`).join("")}
+        </div>
+      `;
+      content.appendChild(bottom);
+
+      const hint = document.createElement("div");
+      hint.className = "scrollHint";
+      hint.textContent = "Scroll → to view match timeline";
+      panel.appendChild(hint);
+
+      return panel;
+    }
+
+    function renderTimeline(matches, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "timelinePanel";
+
+      // Background layers (parallax)
+      const bgA = document.createElement("div");
+      bgA.className = "bgParchment";
+      bgA.dataset.parallax = "0.10";
+
+      const bgB = document.createElement("div");
+      bgB.className = "bgLines";
+      bgB.dataset.parallax = "0.16";
+
+      const bgC = document.createElement("div");
+      bgC.className = "bgCharacters";
+      bgC.dataset.parallax = "0.24";
+
+      panel.appendChild(bgA);
+      panel.appendChild(bgB);
+      panel.appendChild(bgC);
+
+      const line = document.createElement("div");
+      line.className = "timelineLine";
+      panel.appendChild(line);
+
+      const content = document.createElement("div");
+      content.className = "timelineContent";
+      panel.appendChild(content);
+
+      const row = document.createElement("div");
+      row.className = "nodesRow";
+      content.appendChild(row);
+
+      // Nodes (each match skinny)
+      for(const match of matches){
+        const node = document.createElement("div");
+        node.className = "matchNode";
+
+        const dot = document.createElement("div");
+        dot.className = "nodeDot";
+        node.appendChild(dot);
+
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "matchTableWrap";
+
+        const title = document.createElement("div");
+        title.className = "matchTitle";
+        title.textContent = `${match.dateUK} – ${match.victoryType} Victory`;
+        tableWrap.appendChild(title);
+
+        const ordered = computePlacements(match);
+
+        // table
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Points</th>
+              <th>Player</th>
+              <th>Score</th>
+              <th>Civ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = $("tbody", table);
+
+        for(const r of ordered){
+          const p = playersMap.get(r.playerId);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="tdPoints">${r.points} pts</td>
+            <td class="tdPlayer">${p ? p.displayName : r.playerId}</td>
+            <td class="tdScore"><strong>${r.score ?? 0}</strong></td>
+            <td class="tdCiv">${safeText(r.leaderName || "")}${r.leaderName ? " | " : ""}${safeText(r.civName || "")}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        tableWrap.appendChild(table);
+        node.appendChild(tableWrap);
+
+        // Vertical top3 strip centred on timeline line
+        const strip = document.createElement("div");
+        strip.className = "podiumStrip";
+
+        const top3 = ordered.filter(x => x.place <= 3);
+        const placeDefs = [
+          { place: 1, icon: "🏆" },
+          { place: 2, icon: "🥈" },
+          { place: 3, icon: "🥉" }
+        ];
+
+        for(const def of placeDefs){
+          const r = top3.find(x => x.place === def.place);
+          const rowEl = document.createElement("div");
+          rowEl.className = "placeRow";
+
+          const icon = document.createElement("div");
+          icon.className = "placeIcon";
+          icon.textContent = def.icon;
+
+          rowEl.appendChild(icon);
+
+          if(r){
+            const p = playersMap.get(r.playerId);
+
+            const pImg = document.createElement("img");
+            pImg.className = "miniAvatar";
+            pImg.src = p?.avatarPath || "";
+            pImg.alt = `${p?.displayName || r.playerId} avatar`;
+            pImg.onerror = () => { pImg.style.display = "none"; };
+
+            rowEl.appendChild(pImg);
+
+            // civ leader avatar placeholder (until you add images)
+            if(r.civLeaderAvatarPath){
+              const cImg = document.createElement("img");
+              cImg.className = "civAvatar";
+              cImg.src = r.civLeaderAvatarPath;
+              cImg.alt = `${safeText(r.leaderName)} avatar`;
+              cImg.onerror = () => {
+                // replace with placeholder
+                cImg.replaceWith(makeCivPlaceholder());
+              };
+              rowEl.appendChild(cImg);
+            } else {
+              rowEl.appendChild(makeCivPlaceholder());
+            }
+          } else {
+            // if fewer players, just leave blank space
+            rowEl.appendChild(makeCivPlaceholder());
+          }
+
+          strip.appendChild(rowEl);
+        }
+
+        node.appendChild(strip);
+        row.appendChild(node);
+      }
+
+      return panel;
+
+      function makeCivPlaceholder(){
+        const ph = document.createElement("div");
+        ph.className = "civPlaceholder";
+        ph.textContent = "?";
+        return ph;
+      }
+    }
+
+    // ---------- bootstrap ----------
+    async function main(){
+      const res = await fetch("data.json", { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      // Title
+      data.meta = data.meta || {};
+      data.meta.leagueName = data.meta.leagueName || "Zika Civ League 2026";
+
+      const players = data.players || [];
+      let matches = (data.matches || []).slice();
+
+      // Sort matches newest -> oldest (your ribbon starts with newest)
+      matches.sort((a,b) => parseUKDateKey(b.dateUK).localeCompare(parseUKDateKey(a.dateUK)));
+
+      const playersMap = byId(players);
+      const totals = buildTotals(players, matches);
+
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+
+      // 1) Podium screen
+      row.appendChild(renderPodium(data.meta, totals, matches));
+
+      // 2) One big timeline panel holding ALL games (skinny nodes)
+      const timeline = renderTimeline(matches, playersMap);
+      row.appendChild(timeline);
+
+      // Dynamically size timeline width based on #matches
+      // width = left padding + nodes + gaps + right padding (and ensure at least 100vw)
+      const nodeW = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--nodeW")) || 520;
+      const gap = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--nodeGap")) || 90;
+      const pad = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--timelinePad")) || 120;
+      const nodesCount = matches.length;
+
+      const nodesTotal = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+      const desired = pad + nodesTotal + pad;
+      const widthPx = Math.max(window.innerWidth, desired);
+      timeline.style.width = widthPx + "px";
+
+      // Scroll wheel -> horizontal scroll (works even if cursor is over inner elements)
+      const scroller = document.getElementById("scroller");
+      scroller.focus();
+
+      function wheelToHorizontal(e){
+        // If user is holding shift, let browser handle natural horizontal scroll.
+        // Otherwise convert vertical wheel into horizontal movement.
+        if(e.shiftKey) return;
+
+        const absY = Math.abs(e.deltaY);
+        const absX = Math.abs(e.deltaX);
+
+        if(absY > absX){
+          e.preventDefault();
+          scroller.scrollLeft += e.deltaY;
+        }
+      }
+
+      // Bind both: scroller + window (some browsers only fire where focused)
+      scroller.addEventListener("wheel", wheelToHorizontal, { passive:false });
+      window.addEventListener("wheel", wheelToHorizontal, { passive:false });
+
+      // Parallax on parchment layers based on scrollLeft (after podium)
+      function updateParallax(){
+        const x = scroller.scrollLeft;
+        const layers = $$("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", updateParallax);
+      updateParallax();
+
+      // Handle resize (keep timeline at least full width)
+      window.addEventListener("resize", () => {
+        const nodesTotal2 = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+        const desired2 = pad + nodesTotal2 + pad;
+        timeline.style.width = Math.max(window.innerWidth, desired2) + "px";
+      });
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family:system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0;">Zika Civ League 2026</h1>
+          <p style="opacity:.9; line-height:1.5;">Could not load <code>data.json</code>. Make sure you're using <code>python -m http.server</code>.</p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

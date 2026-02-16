@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ZIKA CIV LEAGUE</title>
+
+  <style>
+    @font-face{
+      font-family: "ZikaTitle";
+      src: url("assets/fonts/OPTIColumna-Solid.otf") format("opentype");
+      font-display: swap;
+    }
+
+    :root{
+      --ink: rgba(255,255,255,0.92);
+      --inkDim: rgba(255,255,255,0.78);
+      --shadow: 0 22px 65px rgba(0,0,0,0.40);
+      --softShadow: 0 10px 30px rgba(0,0,0,0.22);
+
+      --nodeW: clamp(460px, 42vw, 640px);
+      --nodeGap: clamp(70px, 8vw, 130px);
+      --timelinePad: clamp(90px, 10vw, 170px);
+
+      /* Move tables UP */
+      --tableLineY: 44%;
+
+      --titleSize: clamp(38px, 4.6vw, 64px);
+
+      /* Standings avatar slots (no rounding) */
+      --standSlot: clamp(120px, 10vw, 150px);
+      --standSlotBig: clamp(150px, 12vw, 190px);
+
+      /* Timeline podium slots (dramatic scaling) */
+      --p1Slot: clamp(120px, 11vw, 160px);
+      --p2Slot: clamp(92px, 8.5vw, 120px);
+      --p3Slot: clamp(72px, 6.6vw, 96px);
+
+      --civ1Slot: clamp(120px, 11vw, 160px);
+      --civ2Slot: clamp(92px, 8.5vw, 120px);
+      --civ3Slot: clamp(72px, 6.6vw, 96px);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:#05060a;
+      color:var(--ink);
+    }
+
+    #scroller{
+      height:100vh;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-behavior:smooth;
+      -webkit-overflow-scrolling:touch;
+      outline:none;
+    }
+    #row{
+      display:flex;
+      height:100%;
+      width:max-content;
+    }
+
+    /* ===== PODIUM PAGE ===== */
+    .podiumPanel{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      flex:0 0 100vw;
+      overflow:hidden;
+    }
+    .bgMap{
+      position:absolute; inset:0; z-index:0;
+      background:
+        radial-gradient(1200px 800px at 25% 20%, rgba(130,170,255,0.22), transparent 60%),
+        radial-gradient(900px 600px at 70% 60%, rgba(255,255,255,0.10), transparent 65%),
+        url("assets/backgrounds/map.png");
+      background-size:cover;
+      background-position:center;
+      filter:saturate(1.05) contrast(1.05);
+      transform: translate3d(0,0,0);
+    }
+    .mapTint{
+      position:absolute; inset:0; z-index:1;
+      background: rgba(5,10,18,0.22);
+    }
+
+    .podiumContent{
+      position:relative;
+      z-index:2;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding: clamp(28px, 5vh, 64px) clamp(20px, 4vw, 52px) clamp(18px, 4vh, 40px);
+      gap: clamp(16px, 2.4vh, 26px);
+      text-align:center;
+    }
+
+    .leagueTitle{
+      margin:0;
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      font-size: var(--titleSize);
+      letter-spacing: 1.2px;
+      color: rgba(255,255,255,0.94);
+      text-shadow: 0 22px 70px rgba(0,0,0,0.45);
+      width:100%;
+      text-align:center;
+    }
+
+    .podiumGrid{
+      width:min(1100px, 95vw);
+      display:grid;
+      grid-template-rows: auto auto auto;
+      gap: clamp(18px, 3vh, 30px);
+      align-items:center;
+      justify-items:center;
+    }
+    .podiumRow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .podiumRow.top{ gap: 0; }
+    .podiumRow.mid{ gap: clamp(70px, 10vw, 160px); }
+    .podiumRow.low{ gap: clamp(70px, 10vw, 160px); }
+
+    /* IMPORTANT: centre based on the avatar, not trophies */
+    .playerFloat{
+      position:relative;
+      display:grid;
+      grid-template-columns: 0px auto; /* trophies are absolute; avatar column is the centred thing */
+      align-items:center;
+      justify-items:center;
+      filter: drop-shadow(var(--softShadow));
+    }
+
+    .trophyStack{
+      position:absolute;
+      right: calc(100% + 18px); /* hang trophies to the left without affecting centring */
+      top: 50%;
+      transform: translateY(-50%);
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:flex-end;
+      min-width: 110px;
+      pointer-events:none;
+    }
+    .trophyLine{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 20px;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 12px 22px rgba(0,0,0,0.35);
+      white-space:nowrap;
+    }
+    .trophyIcon{
+      font-size: 30px;
+      width: 34px;
+      text-align:center;
+    }
+
+    .avatarWrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 12px;
+      min-width: 240px;
+    }
+
+    .rankPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.92);
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Avatar SLOT (bottom-middle anchor, no rounding) */
+    .slot{
+      position:relative;
+      width: var(--standSlot);
+      height: var(--standSlot);
+      overflow:visible;
+    }
+    .slot.big{
+      width: var(--standSlotBig);
+      height: var(--standSlotBig);
+    }
+    .slot img{
+      position:absolute;
+      left:50%;
+      bottom:0;
+      transform: translateX(-50%);
+      max-width: 100%;
+      max-height: 100%;
+      width:auto;
+      height:auto;
+      object-fit: contain;
+      /* NO border-radius (you will provide rounded PNGs) */
+      border: 0;
+      background: transparent;
+      filter: drop-shadow(0 18px 36px rgba(0,0,0,0.22));
+    }
+
+    .pName{
+      margin:0;
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+      color: rgba(255,255,255,0.94);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+    .pMini{
+      margin:0;
+      font-size: 13px;
+      color: rgba(255,255,255,0.78);
+      opacity:0.95;
+      line-height: 1.25;
+    }
+
+    .bottomStats{
+      margin-top: clamp(10px, 2vh, 18px);
+      width:min(1100px, 95vw);
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,0.82);
+      text-shadow: 0 18px 40px rgba(0,0,0,0.40);
+    }
+    .statsLine{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 18px;
+      justify-content:center;
+      font-size: 13px;
+      opacity:0.98;
+    }
+    .statsLine strong{ color: rgba(255,255,255,0.94); }
+
+    .scrollHint{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index:3;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+      background: rgba(0,0,0,0.30);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+    .penaltyNote{
+      position:absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index:3;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 10px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      user-select:none;
+    }
+
+    /* ===== TIMELINE PAGE ===== */
+    .timelinePanel{
+      position:relative;
+      height:100vh;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+
+    /* Repeat-x only works visually if the image is seamless */
+    .bgParchment{
+      position:absolute; inset:0; z-index:0;
+      background-image: url("assets/backgrounds/parchment.png");
+      background-repeat: repeat-x;
+      background-size: auto 100vh;
+      background-position: left top;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    .bgLines{
+      position:absolute; inset:0; z-index:1;
+      opacity:0.11;
+      mix-blend-mode:multiply;
+      background:
+        repeating-linear-gradient(0deg, rgba(60,40,20,0.18) 0px, rgba(60,40,20,0.18) 1px, transparent 1px, transparent 44px),
+        repeating-linear-gradient(90deg, rgba(60,40,20,0.10) 0px, rgba(60,40,20,0.10) 1px, transparent 1px, transparent 60px);
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    .bgCharacters{
+      position:absolute; inset:0; z-index:2;
+      opacity:0.9;
+      background-image:none;
+      background-repeat:repeat-x;
+      background-size:auto 170px;
+      background-position:left bottom;
+      will-change: transform;
+      transform: translate3d(0,0,0);
+    }
+
+    .timelineContent{
+      position:relative;
+      z-index:5;
+      height:100%;
+      padding: 30px var(--timelinePad);
+      display:flex;
+      align-items:stretch;
+    }
+    .nodesRow{
+      position:relative;
+      display:flex;
+      align-items:stretch;
+      gap: var(--nodeGap);
+      height:100%;
+      padding-right: var(--timelinePad);
+    }
+
+    .timelineLine{
+      position:absolute;
+      left: var(--timelinePad);
+      right: var(--timelinePad);
+      top: var(--tableLineY);
+      height: 2px;
+      border-top: 2px dotted rgba(70,45,20,0.45);
+      z-index:4;
+      pointer-events:none;
+      transform: translateY(-50%);
+    }
+
+    .matchNode{
+      width: var(--nodeW);
+      height: 100%;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .nodeDot{
+      position:absolute;
+      top: var(--tableLineY);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.26);
+      border: 2px solid rgba(70,45,20,0.38);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+      z-index:3;
+      pointer-events:none;
+    }
+
+    .matchTableWrap{
+      position:absolute;
+      top: var(--tableLineY);
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.36);
+      border: 1px solid rgba(160,120,60,0.28);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      color: rgba(35,22,10,0.92);
+      z-index:5;
+    }
+
+    .matchTitle{
+      padding: 12px 14px;
+      background: rgba(214,180,90,0.16);
+      border-bottom: 1px solid rgba(160,120,60,0.18);
+      font-family: "ZikaTitle", system-ui, sans-serif;
+      letter-spacing: 0.7px;
+      font-size: 16px;
+      color: rgba(45,28,12,0.92);
+      text-align:center;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      table-layout: fixed;
+    }
+    thead th{
+      text-align:left;
+      padding: 10px 12px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      opacity:0.88;
+      border-bottom: 1px solid rgba(160,120,60,0.14);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody td{
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(160,120,60,0.10);
+      vertical-align:middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+
+    /* Under table: fixed columns so everything aligns vertically */
+    .nodePodium{
+      position:absolute;
+      top: calc(var(--tableLineY) + clamp(150px, 18vh, 215px));
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: clamp(16px, 2.4vh, 30px);
+      z-index:6;
+      pointer-events:none;
+    }
+
+    .placeRow{
+      width: min(520px, 92%);
+      display:grid;
+      grid-template-columns: 52px 1fr 1fr; /* trophy | player slot | civ slot */
+      align-items:end; /* bottom align */
+      justify-items:center;
+      column-gap: 20px;
+    }
+    .placeIcon{
+      font-size: 30px;
+      line-height:1;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,0.18));
+    }
+
+    /* slots ensure bottom-middle anchor alignment */
+    .slotP{ position:relative; overflow:visible; }
+    .slotP img{
+      position:absolute;
+      left:50%;
+      bottom:0;
+      transform: translateX(-50%);
+      max-width:100%;
+      max-height:100%;
+      width:auto; height:auto;
+      object-fit: contain;
+      border:0;
+      background:transparent;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,0.16));
+    }
+
+    .p1 .slotP{ width: var(--p1Slot); height: var(--p1Slot); }
+    .p1 .slotC{ width: var(--civ1Slot); height: var(--civ1Slot); }
+
+    .p2 .slotP{ width: var(--p2Slot); height: var(--p2Slot); }
+    .p2 .slotC{ width: var(--civ2Slot); height: var(--civ2Slot); }
+
+    .p3 .slotP{ width: var(--p3Slot); height: var(--p3Slot); }
+    .p3 .slotC{ width: var(--civ3Slot); height: var(--civ3Slot); }
+
+    .slotC{ position:relative; overflow:visible; }
+    .slotC img{
+      position:absolute;
+      left:50%;
+      bottom:0;
+      transform: translateX(-50%);
+      max-width:100%;
+      max-height:100%;
+      width:auto; height:auto;
+      object-fit: contain;
+      border:0;
+      background:transparent;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,0.14));
+    }
+
+    .civPlaceholder{
+      width:100%;
+      height:100%;
+      border: 1px dashed rgba(60,40,20,0.45);
+      background: rgba(255,255,255,0.18);
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      color: rgba(60,40,20,0.65);
+      font-size: 18px;
+      border-radius: 14px;
+    }
+
+    @media (max-height: 900px){
+      :root{ --tableLineY: 42%; }
+      .podiumContent{ padding: 24px 18px 20px; gap: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="scroller" tabindex="0">
+    <div id="row"></div>
+  </div>
+
+  <script>
+    const MISSED_GAME_PENALTY_AMOUNT = 0.25;
+
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => [...el.querySelectorAll(q)];
+    const safeText = (s) => (s ?? "").toString();
+
+    function normalizeVictoryType(v){
+      const t = safeText(v).trim();
+      if(!t) return "Victory";
+      return /victory$/i.test(t) ? t : `${t} Victory`;
+    }
+
+    function parseUKDateKey(dateUK){
+      const [dd, mm, yyyy] = safeText(dateUK).split("/");
+      return `${yyyy}${mm}${dd}`;
+    }
+
+    function byId(list){
+      const m = new Map();
+      for(const x of list) m.set(x.id, x);
+      return m;
+    }
+
+    function avatarVariant(player, medal){
+      if(!player?.avatarPath) return "";
+      if(!medal) return player.avatarPath;
+
+      const base = player.avatarPath.replace(/\\/g, "/");
+      const lastSlash = base.lastIndexOf("/");
+      const dir = lastSlash >= 0 ? base.slice(0, lastSlash + 1) : "";
+      return `${dir}${player.id}_${medal}.png`;
+    }
+
+    function computePlacements(match){
+      const entries = [...match.entries];
+      const winnerId = match.winnerPlayerId;
+      const winnerEntry = entries.find(e => e.playerId === winnerId);
+      const others = entries.filter(e => e.playerId !== winnerId);
+
+      others.sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+
+      const ordered = [];
+      if(winnerEntry) ordered.push({ ...winnerEntry, place: 1 });
+      for(let i=0;i<others.length;i++){
+        ordered.push({ ...others[i], place: i+2 });
+      }
+
+      const n = ordered.length;
+      for(const o of ordered){
+        o.points = (n - o.place + 1);
+      }
+      return ordered;
+    }
+
+    function victoryTypeBreakdown(matches){
+      const counts = new Map();
+      for(const m of matches){
+        const vt = normalizeVictoryType(m.victoryType);
+        counts.set(vt, (counts.get(vt) ?? 0) + 1);
+      }
+      const total = matches.length || 1;
+      const rows = [...counts.entries()].map(([k,v]) => ({ victoryType:k, count:v, pct:v/total }));
+      rows.sort((a,b) => b.count - a.count);
+      return rows;
+    }
+
+    function pct(x){ return `${Math.round(x*100)}%`; }
+
+    function buildTotals(players, matches){
+      const totals = new Map();
+      for(const p of players){
+        totals.set(p.id, {
+          playerId: p.id,
+          displayName: p.displayName,
+          avatarPath: p.avatarPath,
+          games: 0,
+          totalPoints: 0,
+          wins: 0,
+          medals: { gold:0, silver:0, bronze:0 },
+          avgPoints: 0,
+          rating: 0
+        });
+      }
+
+      for(const match of matches){
+        const ordered = computePlacements(match);
+        for(const o of ordered){
+          const t = totals.get(o.playerId);
+          if(!t) continue;
+          t.games += 1;
+          t.totalPoints += (o.points ?? 0);
+          if(o.place === 1) t.wins += 1;
+          if(o.place === 1) t.medals.gold += 1;
+          if(o.place === 2) t.medals.silver += 1;
+          if(o.place === 3) t.medals.bronze += 1;
+        }
+      }
+
+      const totalGames = matches.length || 0;
+
+      const rows = [...totals.values()].map(t => {
+        const avgPoints = t.games ? (t.totalPoints / t.games) : 0;
+        const playedFrac = totalGames ? (t.games / totalGames) : 0;
+        const missedFrac = 1 - playedFrac;
+        const penalty = missedFrac * MISSED_GAME_PENALTY_AMOUNT;
+        const multiplier = 1 - penalty;
+        const rating = avgPoints * multiplier;
+        return { ...t, avgPoints, rating };
+      });
+
+      rows.sort((a,b) => b.rating - a.rating);
+      return rows;
+    }
+
+    function renderPodium(totals, matches, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "podiumPanel";
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "bgMap" }));
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "mapTint" }));
+
+      const content = document.createElement("div");
+      content.className = "podiumContent";
+      panel.appendChild(content);
+
+      const title = document.createElement("h1");
+      title.className = "leagueTitle";
+      title.textContent = "ZIKA CIV LEAGUE";
+      content.appendChild(title);
+
+      const grid = document.createElement("div");
+      grid.className = "podiumGrid";
+      content.appendChild(grid);
+
+      const top5 = totals.slice(0, 5);
+
+      const rowTop = document.createElement("div"); rowTop.className = "podiumRow top"; grid.appendChild(rowTop);
+      const rowMid = document.createElement("div"); rowMid.className = "podiumRow mid"; grid.appendChild(rowMid);
+      const rowLow = document.createElement("div"); rowLow.className = "podiumRow low"; grid.appendChild(rowLow);
+
+      function trophyLine(icon, count){
+        const line = document.createElement("div");
+        line.className = "trophyLine";
+        line.innerHTML = `<div class="trophyIcon">${icon}</div><div>×${count}</div>`;
+        return line;
+      }
+
+      function standingMedal(rank){
+        if(rank === 1) return "gold";
+        if(rank === 2) return "silver";
+        if(rank === 3) return "bronze";
+        return null;
+      }
+
+      function playerFloat(t, rank){
+        const wrap = document.createElement("div");
+        wrap.className = "playerFloat";
+
+        const trophies = document.createElement("div");
+        trophies.className = "trophyStack";
+        trophies.appendChild(trophyLine("🏆", t.medals.gold));
+        trophies.appendChild(trophyLine("🥈", t.medals.silver));
+        trophies.appendChild(trophyLine("🥉", t.medals.bronze));
+        wrap.appendChild(trophies);
+
+        const aWrap = document.createElement("div");
+        aWrap.className = "avatarWrap";
+
+        const rankPill = document.createElement("div");
+        rankPill.className = "rankPill";
+        rankPill.textContent = `#${rank}`;
+        aWrap.appendChild(rankPill);
+
+        const p = playersMap.get(t.playerId);
+        const medal = standingMedal(rank);
+
+        const slot = document.createElement("div");
+        slot.className = "slot" + (rank === 1 ? " big" : "");
+
+        const img = document.createElement("img");
+        img.src = avatarVariant(p, medal);
+        img.alt = `${t.displayName} avatar`;
+        img.onerror = () => { img.src = p?.avatarPath || ""; };
+
+        slot.appendChild(img);
+        aWrap.appendChild(slot);
+
+        const name = document.createElement("p");
+        name.className = "pName";
+        name.textContent = t.displayName;
+        aWrap.appendChild(name);
+
+        const winRate = t.games ? (t.wins / t.games) : 0;
+        const mini = document.createElement("p");
+        mini.className = "pMini";
+        mini.innerHTML =
+          `<strong>${t.rating.toFixed(2)}</strong> rating • ` +
+          `<strong>${t.avgPoints.toFixed(2)}</strong> avg pts • ` +
+          `<strong>${pct(winRate)}</strong> win`;
+        aWrap.appendChild(mini);
+
+        wrap.appendChild(aWrap);
+        return wrap;
+      }
+
+      if(top5[0]) rowTop.appendChild(playerFloat(top5[0], 1));
+      if(top5[1]) rowMid.appendChild(playerFloat(top5[1], 2));
+      if(top5[2]) rowMid.appendChild(playerFloat(top5[2], 3));
+      if(top5[3]) rowLow.appendChild(playerFloat(top5[3], 4));
+      if(top5[4]) rowLow.appendChild(playerFloat(top5[4], 5));
+
+      const breakdown = victoryTypeBreakdown(matches);
+      const topV = breakdown[0];
+
+      const bottom = document.createElement("div");
+      bottom.className = "bottomStats";
+      bottom.innerHTML = `
+        <div class="statsLine">
+          <span><strong>Most common victory:</strong> ${topV ? `${topV.victoryType} (${Math.round(topV.pct*100)}%)` : "—"}</span>
+        </div>
+        <div class="statsLine">
+          ${breakdown.slice(0,6).map(r => `<span><strong>${r.victoryType}:</strong> ${r.count} (${Math.round(r.pct*100)}%)</span>`).join("")}
+        </div>
+      `;
+      content.appendChild(bottom);
+
+      const hint = document.createElement("div");
+      hint.className = "scrollHint";
+      hint.textContent = "Scroll → to view match timeline";
+      panel.appendChild(hint);
+
+      const note = document.createElement("div");
+      note.className = "penaltyNote";
+      note.textContent = "miss 50% of games, you get a 12.5% average score penalty";
+      panel.appendChild(note);
+
+      return panel;
+    }
+
+    function renderTimeline(matches, playersMap){
+      const panel = document.createElement("section");
+      panel.className = "timelinePanel";
+
+      const bgA = document.createElement("div"); bgA.className = "bgParchment"; bgA.dataset.parallax = "0.10";
+      const bgB = document.createElement("div"); bgB.className = "bgLines"; bgB.dataset.parallax = "0.16";
+      const bgC = document.createElement("div"); bgC.className = "bgCharacters"; bgC.dataset.parallax = "0.24";
+      panel.appendChild(bgA); panel.appendChild(bgB); panel.appendChild(bgC);
+
+      panel.appendChild(Object.assign(document.createElement("div"), { className: "timelineLine" }));
+
+      const content = document.createElement("div");
+      content.className = "timelineContent";
+      panel.appendChild(content);
+
+      const row = document.createElement("div");
+      row.className = "nodesRow";
+      content.appendChild(row);
+
+      for(const match of matches){
+        const node = document.createElement("div");
+        node.className = "matchNode";
+        node.appendChild(Object.assign(document.createElement("div"), { className: "nodeDot" }));
+
+        const tableWrap = document.createElement("div");
+        tableWrap.className = "matchTableWrap";
+
+        const title = document.createElement("div");
+        title.className = "matchTitle";
+        title.textContent = `${match.dateUK} – ${normalizeVictoryType(match.victoryType)}`;
+        tableWrap.appendChild(title);
+
+        const ordered = computePlacements(match);
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th style="width:80px">Points</th>
+              <th style="width:120px">Player</th>
+              <th style="width:80px">Score</th>
+              <th style="width:140px">Leader</th>
+              <th style="width:140px">Civ</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = $("tbody", table);
+
+        for(const r of ordered){
+          const p = playersMap.get(r.playerId);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${r.points} pts</td>
+            <td><strong>${p ? p.displayName : r.playerId}</strong></td>
+            <td><strong>${r.score ?? 0}</strong></td>
+            <td>${safeText(r.leaderName || "")}</td>
+            <td>${safeText(r.civName || "")}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        tableWrap.appendChild(table);
+        node.appendChild(tableWrap);
+
+        const podium = document.createElement("div");
+        podium.className = "nodePodium";
+
+        const p1 = ordered.find(x => x.place === 1);
+        const p2 = ordered.find(x => x.place === 2);
+        const p3 = ordered.find(x => x.place === 3);
+
+        podium.appendChild(placeRow("🏆", p1, "gold", "p1"));
+        podium.appendChild(placeRow("🥈", p2, "silver", "p2"));
+        podium.appendChild(placeRow("🥉", p3, "bronze", "p3"));
+
+        node.appendChild(podium);
+        row.appendChild(node);
+      }
+
+      return panel;
+
+      function placeRow(iconChar, entry, medal, sizeClass){
+        const row = document.createElement("div");
+        row.className = `placeRow ${sizeClass}`;
+
+        const icon = document.createElement("div");
+        icon.className = "placeIcon";
+        icon.textContent = iconChar;
+        row.appendChild(icon);
+
+        // Player slot
+        const slotP = document.createElement("div");
+        slotP.className = "slotP";
+        // Civ slot
+        const slotC = document.createElement("div");
+        slotC.className = "slotC";
+
+        if(entry){
+          const p = playersMap.get(entry.playerId);
+
+          const pImg = document.createElement("img");
+          pImg.src = avatarVariant(p, medal);
+          pImg.alt = `${p?.displayName || entry.playerId} avatar`;
+          pImg.onerror = () => { pImg.src = p?.avatarPath || ""; };
+          slotP.appendChild(pImg);
+
+          if(entry.civLeaderAvatarPath){
+            const cImg = document.createElement("img");
+            cImg.src = entry.civLeaderAvatarPath;
+            cImg.alt = `${safeText(entry.leaderName)} avatar`;
+            cImg.onerror = () => slotC.appendChild(makeCivPlaceholder());
+            slotC.appendChild(cImg);
+          } else {
+            slotC.appendChild(makeCivPlaceholder());
+          }
+        } else {
+          slotC.appendChild(makeCivPlaceholder());
+        }
+
+        row.appendChild(slotP);
+        row.appendChild(slotC);
+        return row;
+      }
+
+      function makeCivPlaceholder(){
+        const ph = document.createElement("div");
+        ph.className = "civPlaceholder";
+        ph.textContent = "?";
+        return ph;
+      }
+    }
+
+    async function main(){
+      const res = await fetch("data.json", { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load data.json (${res.status})`);
+      const data = await res.json();
+
+      const players = data.players || [];
+      let matches = (data.matches || []).slice();
+
+      matches.sort((a,b) => parseUKDateKey(a.dateUK).localeCompare(parseUKDateKey(b.dateUK)));
+
+      const playersMap = byId(players);
+      const totals = buildTotals(players, matches);
+
+      const row = document.getElementById("row");
+      row.innerHTML = "";
+      row.appendChild(renderPodium(totals, matches, playersMap));
+      const timeline = renderTimeline(matches, playersMap);
+      row.appendChild(timeline);
+
+      // Make timeline wide enough for many games
+      const css = getComputedStyle(document.documentElement);
+      const nodeW = parseFloat(css.getPropertyValue("--nodeW")) || 560;
+      const gap = parseFloat(css.getPropertyValue("--nodeGap")) || 120;
+      const pad = parseFloat(css.getPropertyValue("--timelinePad")) || 170;
+      const nodesCount = matches.length;
+
+      const nodesTotal = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+      const desired = pad + nodesTotal + pad;
+      timeline.style.width = Math.max(window.innerWidth, desired) + "px";
+
+      // wheel -> horizontal scroll
+      const scroller = document.getElementById("scroller");
+      scroller.focus();
+      function wheelToHorizontal(e){
+        if(e.shiftKey) return;
+        const absY = Math.abs(e.deltaY);
+        const absX = Math.abs(e.deltaX);
+        if(absY > absX){
+          e.preventDefault();
+          scroller.scrollLeft += e.deltaY;
+        }
+      }
+      scroller.addEventListener("wheel", wheelToHorizontal, { passive:false });
+      window.addEventListener("wheel", wheelToHorizontal, { passive:false });
+
+      // parallax
+      function updateParallax(){
+        const x = scroller.scrollLeft;
+        const layers = $$("[data-parallax]");
+        layers.forEach(layer => {
+          const k = parseFloat(layer.dataset.parallax || "0");
+          layer.style.transform = `translate3d(${-x * k}px, 0, 0)`;
+        });
+      }
+      scroller.addEventListener("scroll", updateParallax);
+      updateParallax();
+
+      window.addEventListener("resize", () => {
+        const nodesTotal2 = nodesCount * nodeW + Math.max(0, nodesCount - 1) * gap;
+        const desired2 = pad + nodesTotal2 + pad;
+        timeline.style.width = Math.max(window.innerWidth, desired2) + "px";
+      });
+    }
+
+    main().catch(err => {
+      console.error(err);
+      document.body.innerHTML = `
+        <div style="padding:24px; font-family:system-ui; color:#fff;">
+          <h1 style="margin:0 0 10px 0;">ZIKA CIV LEAGUE</h1>
+          <p style="opacity:.9; line-height:1.5;">Could not load <code>data.json</code>. Make sure you're using <code>python -m http.server</code>.</p>
+          <pre style="white-space:pre-wrap; background:rgba(255,255,255,0.08); padding:12px; border-radius:12px;">${String(err)}</pre>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

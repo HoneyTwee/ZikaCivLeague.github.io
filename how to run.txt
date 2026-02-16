@@ -1,0 +1,7 @@
+type cmd in the address bar when in C:\ZikaCivLeague
+
+in CMD:
+python -m http.server 8000 --bind 127.0.0.1
+
+in browser address bar:
+http://127.0.0.1:8000/index.html
